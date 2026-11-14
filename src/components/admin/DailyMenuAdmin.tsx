@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Download, Image as ImageIcon, Plus, Save, Trash2, X } from "lucide-react";
 import { DailyMenuService, EMPTY_DAILY_MENU, todayInBogota, type DailyMenuConfig, type DailyMenuSpecial } from "../../services/dailyMenuService";
 import { cop } from "../../lib/format";
+import { generateDailyMenuPoster } from "../../lib/dailyMenuPoster";
 
 type ListKey = "soups" | "sides" | "proteins";
 const fresh = (): DailyMenuConfig => ({ ...EMPTY_DAILY_MENU, id: undefined, scheduledDate: todayInBogota(), soups: [""], sides: [""], proteins: [""], specials: [] });
@@ -11,8 +12,23 @@ export default function DailyMenuAdmin() {
   const [menu, setMenu] = useState<DailyMenuConfig>(fresh);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [poster, setPoster] = useState<{ url: string; filename: string; date: string } | null>(null);
   const load = () => DailyMenuService.list().then(setMenus);
   useEffect(() => { void load().catch(() => setMessage("No se pudieron cargar los menús. Revisa tu conexión.")); }, []);
+  useEffect(() => () => { if (poster) URL.revokeObjectURL(poster.url); }, [poster]);
+
+  const generatePoster = async () => {
+    if (!menu.id || generating) return;
+    setGenerating(true); setMessage("");
+    try {
+      const savedMenu = (await DailyMenuService.list()).find(item => item.id === menu.id);
+      if (!savedMenu) throw new Error('No se encontró el menú guardado. Vuelve a cargarlo.');
+      const image = await generateDailyMenuPoster(savedMenu);
+      setPoster({ url: URL.createObjectURL(image), filename: `menu-la-tuba-${savedMenu.scheduledDate}.png`, date: savedMenu.scheduledDate });
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'No se pudo generar la imagen.'); }
+    finally { setGenerating(false); }
+  };
 
   const changeSpecial = (index: number, patch: Partial<DailyMenuSpecial>) => setMenu((m) => ({ ...m, specials: m.specials.map((item, i) => i === index ? { ...item, ...patch } : item) }));
   const save = async (event: React.FormEvent) => {
@@ -51,11 +67,13 @@ export default function DailyMenuAdmin() {
       </div>
       <label className="daily-publish"><input type="checkbox" checked={menu.active} onChange={(e) => setMenu({ ...menu, active: e.target.checked })} /> Publicar en la fecha programada</label>
       {message && <p role="status" className="daily-hint">{message}</p>}
-      <div className="daily-actions"><button type="submit" disabled={saving || menu.price <= 0} className="bg-[#793713] px-4 py-2 text-sm font-semibold text-white"><Save size={15} /> {saving ? "Guardando..." : "Guardar menú"}</button>{menu.id && <button type="button" onClick={remove}><Trash2 size={15} /> Eliminar</button>}</div>
+      <div className="daily-actions"><button type="submit" disabled={saving || menu.price <= 0} className="bg-[#793713] px-4 py-2 text-sm font-semibold text-white"><Save size={15} /> {saving ? "Guardando..." : "Guardar menú"}</button><button type="button" disabled={!menu.id || generating || saving} onClick={() => void generatePoster()} className="border border-[#793713]/35 px-4 py-2 text-sm disabled:opacity-40"><ImageIcon size={15} /> {generating ? 'Generando…' : 'Generar imagen'}</button>{menu.id && <button type="button" onClick={remove}><Trash2 size={15} /> Eliminar</button>}</div>
+      <p className="daily-hint">La imagen usa el menú guardado. Guarda los cambios antes de generarla.</p>
     </form>
     <aside className="daily-list"><div className="daily-list-heading"><strong>Menús programados</strong><button type="button" onClick={() => { setMenu(fresh()); setMessage(""); }}>+ Nuevo</button></div>
       {menus.length === 0 && <p className="daily-hint">Aún no hay menús programados.</p>}
       {menus.map((item) => <button key={item.id} type="button" onClick={() => { setMenu(item); setMessage(""); }} className={`daily-list-item ${menu.id === item.id ? "is-selected" : ""}`}><b>{item.dateLabel}</b><span>{item.scheduledDate} · {cop(item.price)} · {item.active ? "Activo" : "Oculto"}</span></button>)}
     </aside>
+    {poster && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-labelledby="poster-title"><div className="flex max-h-[90dvh] w-full max-w-xl flex-col bg-[#fff8e8] p-4"><div className="flex items-center justify-between gap-3"><div><h2 id="poster-title" className="font-serif text-xl">Imagen del menú</h2><p className="text-xs text-[#806958]">Menú guardado para {poster.date}</p></div><button type="button" onClick={() => setPoster(null)} aria-label="Cerrar imagen" className="p-2"><X size={20} /></button></div><div className="my-4 min-h-0 flex-1 overflow-y-auto"><img src={poster.url} alt={`Imagen generada del menú para ${poster.date}`} className="mx-auto h-auto max-w-full" /></div><a href={poster.url} download={poster.filename} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#793713] px-4 py-3 text-sm font-semibold text-white"><Download size={17} /> Descargar imagen PNG</a></div></div>}
   </div>;
 }

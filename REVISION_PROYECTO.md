@@ -16,6 +16,9 @@ Revisión de código público/admin, compilación, análisis estático y pruebas
 
 ## Correcciones realizadas
 
+- Menú del día: el administrador puede generar y descargar una imagen PNG a partir de la fecha y opciones del menú guardado; la imagen se crea en el dispositivo y no publica contenido automáticamente.
+- Notificaciones: se reemplazó el tono por el audio entregado por el negocio y se aumentó su volumen de reproducción. El panel debe estar abierto y el sonido activado por una interacción con el navegador.
+
 - Contacto de La Tuba y pagos por Nequi: se configuró el número +57 311 373 1844, previa confirmación del negocio. Se conservaron los enlaces de contacto propios de Akora.
 - Notificaciones del panel: Realtime quedó habilitado para pedidos y reservas, con consulta de respaldo cada 15 segundos. Falta una prueba visual del sonido y de la llegada de eventos con una sesión real.
 

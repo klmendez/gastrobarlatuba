@@ -23,21 +23,27 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (sectio
   const [loading, setLoading] = useState(true);
   const previousOrders = useRef<Set<string> | null>(null);
   const audio = useRef<AudioContext | null>(null);
+  const soundBuffer = useRef<Promise<AudioBuffer> | null>(null);
   const readRef = useRef(read);
   readRef.current = read;
 
-  const playSound = () => {
+  const playSound = async () => {
     const context = audio.current;
-    if (!context || context.state !== 'running') return;
-    const oscillator = context.createOscillator(); const gain = context.createGain();
-    oscillator.type = 'sine'; oscillator.frequency.value = 740;
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.4);
-    oscillator.connect(gain); gain.connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + 0.42);
+    if (!context || context.state !== 'running') throw new Error('Sonido no activado');
+    try {
+      soundBuffer.current ??= fetch('/audio/notificacion-pedido.mp3').then(response => {
+        if (!response.ok) throw new Error('No se pudo cargar el sonido.');
+        return response.arrayBuffer();
+      }).then(buffer => context.decodeAudioData(buffer));
+      const buffer = await soundBuffer.current;
+      if (context.state !== 'running') throw new Error('Sonido no activado');
+      const source = context.createBufferSource(); const gain = context.createGain();
+      source.buffer = buffer; gain.gain.value = 2;
+      source.connect(gain); gain.connect(context.destination); source.start();
+    } catch (error) { soundBuffer.current = null; throw error; }
   };
   const enableSound = async () => {
-    try { audio.current ??= new AudioContext(); await audio.current.resume(); setSoundEnabled(audio.current.state === 'running'); if (audio.current.state === 'running') playSound(); }
+    try { audio.current ??= new AudioContext(); await audio.current.resume(); if (audio.current.state !== 'running') throw new Error('Sonido bloqueado'); await playSound(); setSoundEnabled(true); }
     catch { setSoundEnabled(false); setError('No se pudo activar el sonido en este navegador.'); }
   };
 
@@ -88,7 +94,7 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (sectio
             setRead(nextRead); readRef.current = nextRead; localStorage.setItem(key, JSON.stringify(nextRead));
           } catch { const nextRead = { pedidos: nextOrders.map(row => row.id), reservas: nextReservations.map(row => row.id) }; setRead(nextRead); readRef.current = nextRead; }
           initialized = true;
-        } else if (previousOrders.current && nextOrders.some(row => !previousOrders.current!.has(row.id))) playSound();
+        } else if (previousOrders.current && nextOrders.some(row => !previousOrders.current!.has(row.id))) void playSound().catch(() => { if (alive) setSoundEnabled(false); });
         previousOrders.current = new Set(nextOrders.map(row => row.id));
         setOrders(nextOrders); setReservations(nextReservations); setStock((stockResult.data ?? []).filter(item => Number(item.quantity) <= Number(item.minimum_quantity)));
         setError(''); setLoading(false);
@@ -98,7 +104,7 @@ export default function AdminNotifications({ onNavigate }: { onNavigate: (sectio
     void load();
     const timer = window.setInterval(() => void load(), 15000);
     const channel = db.channel(`admin-notifications-${crypto.randomUUID()}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => void load()).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reservations' }, () => void load()).subscribe();
-    return () => { alive = false; window.clearInterval(timer); void db.removeChannel(channel); void audio.current?.close(); audio.current = null; previousOrders.current = null; };
+    return () => { alive = false; window.clearInterval(timer); void db.removeChannel(channel); void audio.current?.close(); audio.current = null; soundBuffer.current = null; previousOrders.current = null; };
   }, []);
 
   const unreadOrders = orders.filter(row => !read.pedidos.includes(row.id)).length;
