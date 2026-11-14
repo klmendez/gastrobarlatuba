@@ -16,6 +16,9 @@ Revisión de código público/admin, compilación, análisis estático y pruebas
 
 ## Correcciones realizadas
 
+- Contacto de La Tuba y pagos por Nequi: se configuró el número +57 311 373 1844, previa confirmación del negocio. Se conservaron los enlaces de contacto propios de Akora.
+- Notificaciones del panel: Realtime quedó habilitado para pedidos y reservas, con consulta de respaldo cada 15 segundos. Falta una prueba visual del sonido y de la llegada de eventos con una sesión real.
+
 - Registrar venta: búsqueda de productos por nombre, y selección de servicio en mesa (con número), para llevar o domicilio (con dirección y barrio). El domicilio se cotiza con la tarifa vigente de Supabase. La prueba transaccional de venta mixta y los tres servicios termina con `ROLLBACK`.
 
 - Estadísticas administrativas: agregados por día, semana o mes con pedidos, montos, cobros, devoluciones, saldo, servicios, productos y reservas; los movimientos se cuentan por fecha de cobro y el acceso requiere administrador. Filtros de pedidos por fecha de creación en hora de Colombia. La prueba `node scripts/test-admin-statistics.mjs` revierte sus datos.

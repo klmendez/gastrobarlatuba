@@ -1,8 +1,8 @@
 export const BRAND_NAME = "La Tuba Gastrobar";
 export const INSTAGRAM = "@latubagastrobar";
 export const INSTAGRAM_URL = "https://www.instagram.com/latubagastrobar/";
-export const WHATSAPP_PHONE = "3148320587";
-export const NEQUI_PHONE = "317 770 82 26";
+export const WHATSAPP_PHONE = "3113731844";
+export const NEQUI_PHONE = "311 373 18 44";
 export const CITY = "Popayán, Colombia";
 
 export const waLink = (msg: string) =>

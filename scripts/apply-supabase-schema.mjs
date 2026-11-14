@@ -33,6 +33,7 @@ try {
   await client.query(fs.readFileSync(new URL('../supabase/migrations/20261111_order_total_guard.sql', import.meta.url), 'utf8'));
   await client.query(fs.readFileSync(new URL('../supabase/migrations/20261114_catalog_images.sql', import.meta.url), 'utf8'));
   await client.query(fs.readFileSync(new URL('../supabase/migrations/20261114_admin_statistics.sql', import.meta.url), 'utf8'));
+  await client.query(fs.readFileSync(new URL('../supabase/migrations/20261114_realtime_notifications.sql', import.meta.url), 'utf8'));
   const zonesSource = fs.readFileSync(new URL('../src/data/barrios.ts', import.meta.url), 'utf8');
   for (const match of zonesSource.matchAll(/\{ id: "([^"]+)", name: "([^"]+)", price: (\d+|null) \}/g)) {
     await client.query('insert into public.delivery_zones(id,name,price) values ($1,$2,$3) on conflict(id) do nothing', [match[1],match[2],match[3] === 'null' ? null : Number(match[3])]);
