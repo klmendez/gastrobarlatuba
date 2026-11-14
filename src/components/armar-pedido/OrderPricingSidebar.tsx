@@ -1,0 +1,223 @@
+import type { OrderItem } from "../../lib/whatsapp";
+import { cop } from "../../lib/format";
+import { toppingsNames, extrasLine } from "./utils";
+import type { AppliedPromotion } from "../../types/promotion";
+
+type PricedItem = OrderItem & {
+  baseUnit: number;
+  extrasUnit: number;
+  unit: number;
+  line: number;
+};
+
+type Props = {
+  items: PricedItem[];
+  subtotal: number;
+  delivery: number;
+  total: number;
+  canSend: boolean;
+  onSend: () => void;
+  onRemove: (itemId: string) => void;
+  sendDisabledHint: string;
+  descuentoTotal?: number;
+  appliedPromotions?: AppliedPromotion[];
+  couponInput?: string;
+  onCouponInputChange?: (value: string) => void;
+  onApplyCoupon?: () => void;
+  onRemoveCoupon?: () => void;
+  appliedCouponCode?: string | null;
+  couponError?: string | null;
+};
+
+export default function OrderPricingSidebar({
+  items,
+  subtotal,
+  delivery,
+  total,
+  canSend,
+  onSend,
+  onRemove,
+  sendDisabledHint,
+  descuentoTotal = 0,
+  appliedPromotions = [],
+  couponInput = "",
+  onCouponInputChange,
+  onApplyCoupon,
+  onRemoveCoupon,
+  appliedCouponCode = null,
+  couponError = null,
+}: Props) {
+  return (
+    <aside className="lg:sticky lg:top-24 h-fit">
+      <div className="border-b border-gray-200 pb-3">
+        <div className="text-sm font-semibold">Resumen</div>
+        <div className="text-xs text-gray-500">Detalle de precios</div>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        {items.length ? (
+          items.map((item) => {
+            const product = item.product;
+            const isGomitas = product.category === "gomitas";
+            const tops = item.toppingIds.length ? toppingsNames(item.toppingIds) : [];
+            const ex = extrasLine(item.extrasQty);
+
+            return (
+              <div key={item.id} className="border-b border-gray-200 pb-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{product.name}</div>
+                    <div className="text-[11px] text-gray-500">
+                      Cantidad: <span className="font-semibold text-gray-700">x{item.qty}</span>
+                    </div>
+
+                    {isGomitas ? (
+                      <div className="mt-1 text-[11px] text-gray-500">
+                        Referencia: <span className="font-semibold text-gray-700">{item.version ?? "Pendiente"}</span>
+                      </div>
+                    ) : null}
+
+                    {tops.length ? (
+                      <div className="mt-1 text-[11px] text-gray-500">
+                        Toppings: <span className="text-gray-500">{tops.join(", ")}</span>
+                      </div>
+                    ) : null}
+
+                    {ex.length ? (
+                      <div className="mt-1 text-[11px] text-gray-500">
+                        Extras: <span className="text-gray-500">{ex.join(", ")}</span>
+                      </div>
+                    ) : null}
+                    {item.note?.trim() ? <div className="mt-1 text-[11px] text-gray-500">Indicación: <span className="text-gray-700">{item.note.trim()}</span></div> : null}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item.id)}
+                    className="text-[10px] uppercase tracking-[0.22em] text-gray-500 hover:text-black"
+                  >
+                    quitar
+                  </button>
+                </div>
+
+                <div className="mt-3 space-y-1 text-[12px]">
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>Base</span>
+                    <span>{item.baseUnit > 0 ? cop(item.baseUnit) : <span className="text-rojo">Pendiente</span>}</span>
+                  </div>
+                  {item.extrasUnit > 0 ? (
+                    <div className="flex items-center justify-between text-gray-500">
+                      <span>Extras</span>
+                      <span>{cop(item.extrasUnit)}</span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-between text-gray-700 font-semibold">
+                    <span>Subtotal</span>
+                    <span>{item.line > 0 ? cop(item.line) : <span className="text-rojo">—</span>}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="border-b border-dashed border-gray-300 py-6 text-center text-sm text-gray-500">
+            Aún no has agregado productos.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 space-y-4">
+        <div className="border-t border-gray-200 pt-4 space-y-2 text-sm">
+          <div className="flex items-center justify-between text-gray-500">
+            <span>Subtotal</span>
+            <span>{cop(subtotal)}</span>
+          </div>
+          <div className="flex items-center justify-between text-gray-500">
+            <span>Envío</span>
+            <span>{cop(delivery)}</span>
+          </div>
+
+          {onApplyCoupon ? (
+            appliedCouponCode ? (
+              <div className="flex items-center justify-between gap-2 rounded bg-green-50 border border-green-200 px-3 py-2 text-xs">
+                <span className="text-green-700 font-semibold truncate">
+                  Cupón <span className="font-mono">{appliedCouponCode}</span> aplicado
+                </span>
+                <button
+                  type="button"
+                  onClick={onRemoveCoupon}
+                  className="text-green-700 underline underline-offset-2 shrink-0"
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="flex gap-2">
+                  <input
+                    value={couponInput}
+                    onChange={(e) => onCouponInputChange?.(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        onApplyCoupon();
+                      }
+                    }}
+                    placeholder="Código de cupón"
+                    className="flex-1 min-w-0 border border-gray-300 px-3 py-2 text-sm font-mono uppercase outline-none focus:border-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={onApplyCoupon}
+                    className="border border-black px-3 py-2 text-xs font-semibold hover:bg-black hover:text-white transition-colors shrink-0"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+                {couponError && <div className="text-xs text-rojo">{couponError}</div>}
+              </div>
+            )
+          ) : null}
+
+          {descuentoTotal > 0 && (
+            <>
+              {appliedPromotions.map((p, i) => (
+                <div key={i} className="flex items-center justify-between text-rojo font-semibold">
+                  <span className="text-xs">{p.nombre}</span>
+                  <span>-{cop(p.descuento)}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between text-rojo font-semibold bg-rojo-light rounded px-2 py-1">
+                <span>Te ahorras</span>
+                <span>-{cop(descuentoTotal)}</span>
+              </div>
+            </>
+          )}
+          <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-black font-semibold text-lg">
+            <span>Total</span>
+            <div className="text-right">
+              {descuentoTotal > 0 && (
+                <div className="text-xs text-gray-400 line-through">{cop(subtotal)}</div>
+              )}
+              <span>{cop(total)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onSend}
+        disabled={!canSend}
+        className={[
+          "mt-5 w-full py-3 font-semibold transition-colors",
+          canSend ? "bg-rojo text-white hover:bg-rojo-dark" : "border border-gray-300 text-gray-300 cursor-not-allowed",
+        ].join(" ")}
+      >
+        Confirmar pedido
+      </button>
+
+      {!canSend ? <div className="mt-2 text-[11px] text-gray-500">{sendDisabledHint}</div> : null}
+    </aside>
+  );
+}
