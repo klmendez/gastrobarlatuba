@@ -16,6 +16,13 @@
     <title>La Tuba Gastrobar</title>
   </head>
   <body>
+    <script>
+      const pagesPath = sessionStorage.getItem('la-tuba-pages-path');
+      if (pagesPath) {
+        sessionStorage.removeItem('la-tuba-pages-path');
+        if (pagesPath.startsWith('/') && !pagesPath.startsWith('//')) history.replaceState(null, '', pagesPath);
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
