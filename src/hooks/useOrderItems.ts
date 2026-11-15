@@ -34,6 +34,8 @@ function createItem(product: Product): OrderItem {
 function reducer(state: State, action: OrderItemsAction): State {
   switch (action.type) {
     case "add": {
+      const match = state.find(item => item.product.id === action.item.product.id && !item.note?.trim() && !item.product.dailyMenuId && !Object.keys(item.extrasQty).length && !item.toppingIds.length);
+      if (match) return state.map(item => item.id === match.id ? { ...item, qty: item.qty + 1 } : item);
       return [...state, action.item];
     }
     case "remove": {
@@ -42,6 +44,7 @@ function reducer(state: State, action: OrderItemsAction): State {
     case "removeLastOfProduct": {
       const lastIdx = state.map((it) => it.product.id).lastIndexOf(action.productId);
       if (lastIdx === -1) return state;
+      if (state[lastIdx].qty > 1) return state.map((item, index) => index === lastIdx ? { ...item, qty: item.qty - 1 } : item);
       return [...state.slice(0, lastIdx), ...state.slice(lastIdx + 1)];
     }
     case "duplicate": {
@@ -76,15 +79,21 @@ export function useOrderItems(initialItems: OrderItem[] = []) {
     try {
       const saved = window.localStorage.getItem("la-tuba-cart");
       const parsed: unknown = saved ? JSON.parse(saved) : fallback;
-      return Array.isArray(parsed) ? (parsed as OrderItem[]).filter((item) => item.product?.id && (item.product.dailyMenuId || /^[0-9a-f-]{36}$/i.test(item.product.id))) : fallback;
+      return Array.isArray(parsed) ? (parsed as OrderItem[])
+        .filter((item) => item?.product?.prices && (item.product.dailyMenuId || /^[0-9a-f-]{36}$/i.test(item.product.id)))
+        .map(item => ({ ...item, id: item.id || createOrderItemId(), qty: Number.isInteger(item.qty) && item.qty > 0 ? item.qty : 1,
+          toppingIds: Array.isArray(item.toppingIds) ? item.toppingIds : [],
+          extrasQty: item.extrasQty && typeof item.extrasQty === 'object' ? item.extrasQty : {},
+          extraSelections: item.extraSelections && typeof item.extraSelections === 'object' ? item.extraSelections : {},
+          note: typeof item.note === 'string' ? item.note : '' })) : fallback;
     } catch {
       return fallback;
     }
   });
 
   useEffect(() => {
-    window.localStorage.setItem("la-tuba-cart", JSON.stringify(items));
-    window.dispatchEvent(new CustomEvent("la-tuba-cart-updated", { detail: items.length }));
+    try { window.localStorage.setItem("la-tuba-cart", JSON.stringify(items)); } catch { /* Keep the current order usable when storage is full or blocked. */ }
+    window.dispatchEvent(new CustomEvent("la-tuba-cart-updated", { detail: items.reduce((sum, item) => sum + item.qty, 0) }));
   }, [items]);
 
   const addProduct = useCallback((product: Product) => {
@@ -113,7 +122,7 @@ export function useOrderItems(initialItems: OrderItem[] = []) {
   const selectedCountByProduct = useMemo(
     () =>
       items.reduce<Record<string, number>>((acc, item) => {
-        acc[item.product.id] = (acc[item.product.id] ?? 0) + 1;
+        acc[item.product.id] = (acc[item.product.id] ?? 0) + item.qty;
         return acc;
       }, {}),
     [items],

@@ -15,8 +15,9 @@ export function useStoreProducts() {
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    if (!supabase) return;
+    if (!supabase) { setError('No se pudo conectar con la carta.'); return; }
     setLoading(true);
+    try {
     const { data, error: requestError } = await supabase.rpc("public_catalog_items").order("category").order("name");
     if (requestError) { setError(requestError.message); setLoading(false); return; }
     const rows = (data ?? []) as CatalogRow[];
@@ -36,6 +37,7 @@ export function useStoreProducts() {
     rows.forEach(row => unique.set(`${row.item_type}-${slug(row.category)}`, { id: `${row.item_type}-${slug(row.category)}`, name: row.item_type === "bebida" ? `Bebidas · ${row.category}` : row.category }));
     setCategories([...unique.values()]);
     setError(null); setLoading(false);
+    } catch { setError('No pudimos cargar la carta. Revisa tu conexión.'); setLoading(false); }
   }, []);
 
   useEffect(() => { const timer = window.setTimeout(() => { void reload(); }, 0); return () => window.clearTimeout(timer); }, [reload]);

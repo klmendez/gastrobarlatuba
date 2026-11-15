@@ -3,6 +3,8 @@ import { lazy, Suspense, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartBubble from "./components/CartBubble";
+import PageLoading from './components/PageLoading';
+import PageErrorBoundary from './components/PageErrorBoundary';
 
 const Home = lazy(() => import('./pages/Home'));
 const CatalogoPage = lazy(() => import('./pages/CatalogoPage'));
@@ -33,11 +35,12 @@ function AppLayout() {
   const isAdmin = location.pathname.startsWith("/admin");
 
   return (
-    <div className={`min-h-dvh flex flex-col ${isAdmin ? "bg-gray-50 text-neutral-900" : "bg-crema pb-7 text-neutral-900"}`}>
+    <div className={`min-h-dvh flex flex-col ${isAdmin ? "bg-gray-50 text-neutral-900" : "public-site bg-crema text-neutral-900"}`}>
       <ScrollToTop />
       {!isAdmin && <Navbar />}
-      <main className="flex-1">
-        <Suspense fallback={<p className="p-8 text-center">Cargando…</p>}><Routes>
+      <a href="#contenido" className="skip-link">Saltar al contenido</a>
+      <div id="contenido" tabIndex={-1} className="flex-1 min-w-0">
+        <PageErrorBoundary key={location.pathname.startsWith('/armar') ? '/armar' : location.pathname}><Suspense fallback={<PageLoading />}><Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalogo" element={<CatalogoPage />} />
           <Route path="/productos" element={<Catalogo productType="otro" />} />
@@ -46,15 +49,14 @@ function AppLayout() {
           <Route path="/reservas" element={<Reservas />} />
           <Route path="/experiencia" element={<EventsExperience />} />
           <Route path="/eventos" element={<EventsExperience />} />
-          <Route path="/armar" element={<ArmarPedido />} />
-          <Route path="/armar/personalizar" element={<ArmarPedido />} />
+          <Route path="/armar/*" element={<ArmarPedido />} />
           <Route path="/admin" element={<AdminAuth><AdminDashboard /></AdminAuth>} />
           <Route path="/admin/pedido/:id" element={<AdminAuth><OrderDetailPage /></AdminAuth>} />
           <Route path="/terminos" element={<Terminos />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes></Suspense>
-      </main>
+        </Routes></Suspense></PageErrorBoundary>
+      </div>
       {!isAdmin && <Footer />}
       {!isAdmin && <CartBubble />}
     </div>

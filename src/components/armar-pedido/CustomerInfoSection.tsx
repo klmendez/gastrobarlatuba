@@ -43,7 +43,7 @@ function NextButton({ onClick }: { onClick: () => void }) {
         onClick={onClick}
         className="w-full sm:w-auto border border-rojo bg-rojo px-8 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition active:bg-rojo-dark"
       >
-        Siguiente →
+        Siguiente 
       </button>
     </div>
   );
@@ -57,14 +57,14 @@ function BackNextButtons({ onBack, onNext }: { onBack: () => void; onNext: () =>
         onClick={onBack}
         className="border border-gray-900 bg-gray-900 px-6 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-black"
       >
-        ← Atrás
+         Atrás
       </button>
       <button
         type="button"
         onClick={onNext}
         className="flex-1 border border-rojo bg-rojo px-8 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition active:bg-rojo-dark"
       >
-        Siguiente →
+        Siguiente 
       </button>
     </div>
   );
@@ -201,6 +201,7 @@ export default function CustomerInfoSection({
     if (prevSubStepRef.current === effectiveSubStep) return;
     prevSubStepRef.current = effectiveSubStep;
     const timeout = window.setTimeout(() => {
+      sectionTopRef.current?.focus({ preventScroll: true });
       sectionTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
     }, 60);
     return () => window.clearTimeout(timeout);
@@ -309,7 +310,7 @@ export default function CustomerInfoSection({
   const hasErrors = Object.values(errors).some(Boolean);
 
   const labelClass = (errored: boolean) =>
-    `text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] ${errored ? "text-red-600" : "text-gray-500"}`;
+    `text-xs font-semibold uppercase tracking-wider sm:text-xs ${errored ? "text-red-600" : "text-gray-500"}`;
 
   const inputClass = (errored: boolean) =>
     [
@@ -320,7 +321,7 @@ export default function CustomerInfoSection({
     ].join(" ");
 
   return (
-    <section ref={sectionTopRef} className="scroll-mt-24 pt-0 sm:pt-6 space-y-6">
+    <section tabIndex={-1} ref={sectionTopRef} className="scroll-mt-24 pt-0 sm:pt-6 space-y-6">
       {/* Header */}
       <div className="text-center">
         <h2 className="text-lg font-semibold text-gray-900">Datos y envío</h2>
@@ -342,13 +343,13 @@ export default function CustomerInfoSection({
             />
           ))}
         </div>
-        <span className="shrink-0 text-[11px] font-medium text-gray-400">
+        <span className="shrink-0 text-xs font-medium text-gray-600">
           Paso {subStepPosition} de {visibleSubSteps.length}
         </span>
       </div>
 
       {showFieldErrors && hasErrors ? (
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+        <div role="alert" className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
           <X size={16} className="shrink-0" />
           Completa los campos marcados para continuar.
         </div>
@@ -373,7 +374,7 @@ export default function CustomerInfoSection({
                   className="flex w-full items-center gap-3 py-4 text-left"
                   aria-pressed={selected}
                 >
-                  <Icon size={21} className={selected ? "text-rojo" : "text-gray-400"} />
+                  <Icon size={21} className={selected ? "text-rojo" : "text-gray-600"} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-gray-900">{option.title}</span>
                     <span className="mt-0.5 block text-xs text-gray-500">{option.detail}</span>
@@ -400,7 +401,7 @@ export default function CustomerInfoSection({
                   <User size={12} className="inline mr-1 -mt-0.5" />Nombre
                 </label>
                 <input
-                  id="customer-name"
+                  id="customer-name" autoComplete="name" aria-invalid={showFieldErrors && errors.name}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={inputClass(showFieldErrors && errors.name)}
@@ -415,7 +416,7 @@ export default function CustomerInfoSection({
                   <Phone size={12} className="inline mr-1 -mt-0.5" />Teléfono
                 </label>
                 <input
-                  id="customer-phone"
+                  id="customer-phone" type="tel" inputMode="tel" autoComplete="tel" aria-invalid={showFieldErrors && errors.phone}
                   value={phone}
                   onChange={(e) => { if (clientFound) { setName(""); setBirthday(""); setEmail(""); setSavedAddresses([]); setAddress(""); setBarrio(null); setBarrioQuery(""); setReference(""); setClientFound(false); } setPhone(e.target.value); }}
                   className={inputClass(showFieldErrors && errors.phone)}
@@ -425,7 +426,7 @@ export default function CustomerInfoSection({
                   <p className="mt-1 text-xs font-medium text-red-600">Falta ingresar tu teléfono.</p>
                 ) : null}
                 {clientFound && (
-                  <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-rojo font-medium">
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-rojo font-medium">
                     <CheckCircle2 size={12} />
                     Datos encontrados. Puedes revisarlos o modificarlos.
                   </div>
@@ -434,7 +435,7 @@ export default function CustomerInfoSection({
               </div>
 
               <div className="order-3">
-                <label htmlFor="customer-birthday" className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-[11px]">
+                <label htmlFor="customer-birthday" className="text-xs font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                   <Cake size={12} className="inline mr-1 -mt-0.5" />Cumpleaños (opcional)
                 </label>
                 <input
@@ -446,10 +447,10 @@ export default function CustomerInfoSection({
                 />
                 {isBirthdayToday(toBirthdayKey(birthday)) && (
                   <div className="mt-2 rounded-lg border border-rojo/30 bg-rojo-light p-3">
-                    <div className="flex items-center gap-1.5 text-[11px] text-rojo font-semibold">
+                    <div className="flex items-center gap-1.5 text-xs text-rojo font-semibold">
                       🎂 ¡Feliz cumpleaños! Tienes un descuento especial esperándote.
                     </div>
-                    <p className="mt-1.5 text-[10px] text-rojo/80">
+                    <p className="mt-1.5 text-xs text-rojo/80">
                       Para reclamarlo, envíanos por WhatsApp una foto de tu cédula que coincida con el nombre de este pedido. Lo confirmamos por ahí.
                     </p>
                   </div>
@@ -457,7 +458,7 @@ export default function CustomerInfoSection({
               </div>
 
               <div className="order-4">
-                <label htmlFor="customer-email" className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-[11px]">
+                <label htmlFor="customer-email" className="text-xs font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                   <Mail size={12} className="inline mr-1 -mt-0.5" />Correo (opcional)
                 </label>
                 <input
@@ -491,7 +492,7 @@ export default function CustomerInfoSection({
                 {service === "llevar" && (
                   <CheckCircle2 size={16} className="absolute top-3 right-3 text-rojo" />
                 )}
-                <Store size={20} className={service === "llevar" ? "text-rojo" : "text-gray-400"} />
+                <Store size={20} className={service === "llevar" ? "text-rojo" : "text-gray-600"} />
                 <div className="mt-2 text-sm font-semibold text-gray-900">Para llevar</div>
                 <div className="mt-0.5 text-xs text-gray-500">Recoges en el punto acordado</div>
               </button>
@@ -510,7 +511,7 @@ export default function CustomerInfoSection({
                 {service === "domicilio" && (
                   <CheckCircle2 size={16} className="absolute top-3 right-3 text-rojo" />
                 )}
-                <Truck size={20} className={service === "domicilio" ? "text-rojo" : "text-gray-400"} />
+                <Truck size={20} className={service === "domicilio" ? "text-rojo" : "text-gray-600"} />
                 <div className="mt-2 text-sm font-semibold text-gray-900">Domicilio</div>
                 <div className="mt-0.5 text-xs text-gray-500">Te lo llevamos a tu barrio</div>
               </button>
@@ -529,7 +530,7 @@ export default function CustomerInfoSection({
                 {service === "local" && (
                   <CheckCircle2 size={16} className="absolute top-3 right-3 text-rojo" />
                 )}
-                <Store size={20} className={service === "local" ? "text-rojo" : "text-gray-400"} />
+                <Store size={20} className={service === "local" ? "text-rojo" : "text-gray-600"} />
                 <div className="mt-2 text-sm font-semibold text-gray-900">En el local</div>
                 <div className="mt-0.5 text-xs text-gray-500">Consumes en nuestro local</div>
               </button>
@@ -585,18 +586,18 @@ export default function CustomerInfoSection({
                       ].join(" ")}
                     >
                       <div className="flex items-start gap-2.5">
-                        <MapPin size={14} className={address === addr.direccion ? "text-rojo shrink-0 mt-0.5" : "text-gray-400 shrink-0 mt-0.5"} />
+                        <MapPin size={14} className={address === addr.direccion ? "text-rojo shrink-0 mt-0.5" : "text-gray-600 shrink-0 mt-0.5"} />
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-gray-900 text-sm">{addr.direccion}</div>
                           <div className="flex items-center gap-2 mt-1">
                             {addr.barrio && (
                               <span className={[
-                                "text-[11px] font-medium px-2 py-0.5 rounded-full",
+                                "text-xs font-medium px-2 py-0.5 rounded-full",
                                 address === addr.direccion ? "bg-white text-rojo" : "bg-gray-100 text-gray-500",
                               ].join(" ")}>{addr.barrio}</span>
                             )}
                             {addr.referencia && (
-                              <span className="text-[11px] text-gray-400 truncate">Ref: {addr.referencia}</span>
+                              <span className="text-xs text-gray-600 truncate">Ref: {addr.referencia}</span>
                             )}
                           </div>
                         </div>
@@ -624,7 +625,7 @@ export default function CustomerInfoSection({
                 <label htmlFor="customer-barrio-search" className={labelClass(showFieldErrors && errors.barrio)}>
                   <MapPin size={12} className="inline mr-1 -mt-0.5" />Barrio
                 </label>
-                <span className="text-[11px] text-gray-400">
+                <span className="text-xs text-gray-600">
                   Si no encuentras tu barrio, elige uno cercano.
                 </span>
               </div>
@@ -636,7 +637,7 @@ export default function CustomerInfoSection({
                 ].join(" ")}
               >
                 <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
                   <input
                     id="customer-barrio-search"
                     value={barrioQuery}
@@ -690,7 +691,7 @@ export default function CustomerInfoSection({
                         >
                           <div className="flex items-center justify-between gap-3">
                             <span className="font-medium">{b.name}</span>
-                            <span className={`text-xs font-semibold ${selected ? "text-gray-900" : "text-gray-400"}`}>
+                            <span className={`text-xs font-semibold ${selected ? "text-gray-900" : "text-gray-600"}`}>
                               {b.price == null ? "Por confirmar" : cop(b.price)}
                             </span>
                           </div>
@@ -704,7 +705,7 @@ export default function CustomerInfoSection({
                   )}
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-[11px] text-gray-400">
+                <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
                   <span>{filteredBarrios.length}/{totalBarrios} barrios</span>
                   {barrio ? (
                     <span className="flex items-center gap-1 font-medium text-gray-700">
@@ -741,7 +742,7 @@ export default function CustomerInfoSection({
                   <MapPin size={12} className="inline mr-1 -mt-0.5" />Dirección
                 </label>
                 <input
-                  id="customer-address"
+                  id="customer-address" autoComplete="street-address" aria-invalid={showFieldErrors && errors.address}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className={inputClass(showFieldErrors && errors.address)}
@@ -753,7 +754,7 @@ export default function CustomerInfoSection({
               </div>
 
               <div>
-                <label htmlFor="customer-reference" className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-[11px]">
+                <label htmlFor="customer-reference" className="text-xs font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                   Referencia (opcional)
                 </label>
                 <input
@@ -769,10 +770,10 @@ export default function CustomerInfoSection({
 
             {/* Ubicación */}
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-[11px]">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                 <Navigation size={12} className="inline mr-1 -mt-0.5" />Ubicación (opcional)
               </label>
-              <p className="mt-0.5 text-[11px] text-gray-400">
+              <p className="mt-0.5 text-xs text-gray-600">
                 Comparte tu ubicación para que lleguemos más rápido.
               </p>
 
@@ -810,14 +811,14 @@ export default function CustomerInfoSection({
                     <button
                       type="button"
                       onClick={handleRemoveLocation}
-                      className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-700 transition"
+                      className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-700 transition"
                     >
                       <X size={12} /> Quitar
                     </button>
                   </div>
 
                   {location.accuracy && (
-                    <div className="mt-1.5 text-[11px] text-gray-500">
+                    <div className="mt-1.5 text-xs text-gray-500">
                       Precisión: ~{Math.round(location.accuracy)}m
                     </div>
                   )}
@@ -826,7 +827,7 @@ export default function CustomerInfoSection({
                     href={location.mapsLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-700 transition hover:bg-gray-50"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
                   >
                     <ExternalLink size={12} />
                     Ver en Google Maps
@@ -835,7 +836,7 @@ export default function CustomerInfoSection({
               )}
 
               {locationError ? (
-                <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-600">
+                <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
                   {locationError}
                 </div>
               ) : null}
@@ -850,17 +851,17 @@ export default function CustomerInfoSection({
         <>
           {/* Pago */}
           <div className="border-t border-gray-200 pt-5">
-            <div className="flex items-center justify-between gap-3">
-              <StepHeader n={4}>¿Cómo vas a pagar?</StepHeader>
-              <div className="mb-4 shrink-0 text-[11px] text-gray-400">
+            <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <StepHeader n={subStepPosition}>¿Cómo vas a pagar?</StepHeader>
+              <div className="mb-4 shrink-0 text-xs text-gray-600">
                 Nequi: <span className="font-semibold text-gray-700">{nequiPhone}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setPaymentMethod("Transferencia")}
+                aria-pressed={paymentMethod === "Transferencia"} onClick={() => setPaymentMethod("Transferencia")}
                 className={[
                   "relative flex items-center gap-2 rounded-xl border-2 px-4 py-3 text-left text-gray-900 transition-all",
                   paymentMethod === "Transferencia"
@@ -871,13 +872,13 @@ export default function CustomerInfoSection({
                 {paymentMethod === "Transferencia" && (
                   <CheckCircle2 size={14} className="absolute top-2 right-2 text-rojo" />
                 )}
-                <CreditCard size={16} className={paymentMethod === "Transferencia" ? "text-rojo" : "text-gray-400"} />
+                <CreditCard size={16} className={paymentMethod === "Transferencia" ? "text-rojo" : "text-gray-600"} />
                 <span className="text-sm font-medium">Transferencia</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setPaymentMethod("Efectivo")}
+                aria-pressed={paymentMethod === "Efectivo"} onClick={() => setPaymentMethod("Efectivo")}
                 className={[
                   "relative flex items-center gap-2 rounded-xl border-2 px-4 py-3 text-left text-gray-900 transition-all",
                   paymentMethod === "Efectivo"
@@ -888,13 +889,13 @@ export default function CustomerInfoSection({
                 {paymentMethod === "Efectivo" && (
                   <CheckCircle2 size={14} className="absolute top-2 right-2 text-rojo" />
                 )}
-                <Banknote size={16} className={paymentMethod === "Efectivo" ? "text-rojo" : "text-gray-400"} />
+                <Banknote size={16} className={paymentMethod === "Efectivo" ? "text-rojo" : "text-gray-600"} />
                 <span className="text-sm font-medium">Efectivo</span>
               </button>
             </div>
 
             <div className="mt-4">
-              <label htmlFor="comments" className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-[11px]">
+              <label htmlFor="comments" className="text-xs font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                 <MessageSquare size={12} className="inline mr-1 -mt-0.5" />Comentarios (opcional)
               </label>
               <textarea

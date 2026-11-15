@@ -66,35 +66,35 @@ export default function OrderPricingSidebar({
               <div key={item.id} className="border-b border-gray-200 pb-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{product.name}</div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-sm font-semibold break-words">{product.name}</div>
+                    <div className="text-sm text-gray-500">
                       Cantidad: <span className="font-semibold text-gray-700">x{item.qty}</span>
                     </div>
 
                     {isGomitas ? (
-                      <div className="mt-1 text-[11px] text-gray-500">
+                      <div className="mt-1 text-sm text-gray-500">
                         Referencia: <span className="font-semibold text-gray-700">{item.version ?? "Pendiente"}</span>
                       </div>
                     ) : null}
 
                     {tops.length ? (
-                      <div className="mt-1 text-[11px] text-gray-500">
+                      <div className="mt-1 text-sm text-gray-500">
                         Toppings: <span className="text-gray-500">{tops.join(", ")}</span>
                       </div>
                     ) : null}
 
                     {ex.length ? (
-                      <div className="mt-1 text-[11px] text-gray-500">
+                      <div className="mt-1 text-sm text-gray-500">
                         Extras: <span className="text-gray-500">{ex.join(", ")}</span>
                       </div>
                     ) : null}
-                    {item.note?.trim() ? <div className="mt-1 text-[11px] text-gray-500">Indicación: <span className="text-gray-700">{item.note.trim()}</span></div> : null}
+                    {item.note?.trim() ? <div className="mt-1 text-sm text-gray-500">Indicación: <span className="text-gray-700">{item.note.trim()}</span></div> : null}
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => onRemove(item.id)}
-                    className="text-[10px] uppercase tracking-[0.22em] text-gray-500 hover:text-black"
+                    aria-label={`Quitar ${product.name} del pedido`} onClick={() => onRemove(item.id)}
+                    className="text-xs uppercase tracking-[0.22em] text-gray-500 hover:text-black"
                   >
                     quitar
                   </button>
@@ -163,7 +163,7 @@ export default function OrderPricingSidebar({
                         onApplyCoupon();
                       }
                     }}
-                    placeholder="Código de cupón"
+                    aria-label="Código de cupón" placeholder="Código de cupón"
                     className="flex-1 min-w-0 border border-gray-300 px-3 py-2 text-sm font-mono uppercase outline-none focus:border-black"
                   />
                   <button
@@ -217,7 +217,7 @@ export default function OrderPricingSidebar({
         Confirmar pedido
       </button>
 
-      {!canSend ? <div className="mt-2 text-[11px] text-gray-500">{sendDisabledHint}</div> : null}
+      {!canSend ? <div className="mt-2 text-sm text-gray-500">{sendDisabledHint}</div> : null}
     </aside>
   );
 }

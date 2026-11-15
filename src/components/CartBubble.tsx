@@ -6,7 +6,7 @@ function savedCount() {
   try {
     const value = window.localStorage.getItem("la-tuba-cart");
     const parsed: unknown = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? parsed.filter(item => item?.product?.id).length : 0;
+    return Array.isArray(parsed) ? parsed.reduce((sum, item) => sum + (item?.product?.id ? Number(item.qty) || 1 : 0), 0) : 0;
   } catch {
     return 0;
   }
@@ -26,12 +26,12 @@ export default function CartBubble() {
     };
   }, []);
 
-  if (!count || pathname.startsWith("/admin")) return null;
+  if (!count || pathname.startsWith("/admin") || pathname.startsWith("/armar")) return null;
 
-  const onOrderFlow = pathname.startsWith("/armar");
-
-  return <Link to="/armar?carrito=1" aria-label={`Abrir carrito con ${count} productos`} className={`fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-rojo text-crema shadow-lg transition hover:bg-rojo-dark sm:bottom-12 sm:right-6 sm:h-16 sm:w-16 ${onOrderFlow ? "bottom-24" : "bottom-10"}`}>
-    <ShoppingBag size={23} />
-    <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-crema bg-white px-1 text-xs font-semibold text-rojo">{count}</span>
-  </Link>;
+  return <div className="public-cart-bar fixed inset-x-0 bottom-0 z-40 bg-crema/95 px-3 pt-2 backdrop-blur">
+    <Link to="/armar/personalizar" className="mx-auto flex min-h-14 max-w-xl items-center justify-center gap-3 rounded-xl bg-rojo px-4 py-3 text-sm font-medium text-crema shadow-lg hover:bg-rojo-dark">
+      <ShoppingBag size={22} aria-hidden="true" />
+      <span>Ver pedido · {count} {count === 1 ? 'producto' : 'productos'}</span>
+    </Link>
+  </div>;
 }

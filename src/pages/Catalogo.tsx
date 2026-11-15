@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Search, X } from "lucide-react";
+import { Plus, Minus, Search, X } from "lucide-react";
 import { useStoreProducts } from "../hooks/useStoreProducts";
+import { useOrderItems } from "../hooks/useOrderItems";
 import { cop } from "../lib/format";
 import { isFixedPrice } from "../data/products";
 
@@ -9,12 +10,14 @@ type Props = { embedded?: boolean; showHeader?: boolean; productType?: "carta" |
 
 export default function Catalogo({ embedded = false, showHeader = true, productType = "carta" }: Props) {
   const [selectedCategory, setSelectedCategory] = useState("todas");
+  const { selectedCountByProduct, addProduct, removeLastOfProduct } = useOrderItems();
+  const [announcement, setAnnouncement] = useState("");
   const [query, setQuery] = useState("");
   const navRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const { products, categories, loading, error } = useStoreProducts();
+  const { products, categories, loading, error, reload } = useStoreProducts();
   const sectionCategories = categories.filter(category => productType === "otro" ? category.id.startsWith("otro-") : !category.id.startsWith("otro-")).sort((a, b) => Number(a.id.startsWith("bebida-")) - Number(b.id.startsWith("bebida-")));
-  const carta = sectionCategories.map(category => ({ ...category, products: products.filter(product => product.categoryId === category.id) }));
+  const carta = sectionCategories.map(category => ({ ...category, products: products.filter(product => product.categoryId === category.id).sort((a, b) => category.id.startsWith("bebida-") && a.category === "frutafresh" && b.category === "frutafresh" && isFixedPrice(a.prices) && isFixedPrice(b.prices) ? a.prices.fijo - b.prices.fijo : 0) }));
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const visibleCategories = carta.map((category) => ({ ...category, products: category.products.filter((item) => normalize(item.name).includes(normalize(query.trim()))) }))
     .filter((category) => category.products.length > 0);
@@ -48,22 +51,22 @@ export default function Catalogo({ embedded = false, showHeader = true, productT
         <div className="mx-auto max-w-6xl text-center">
           <div>
             <div>
-              <h1 className="mt-1 text-3xl text-rojo-dark sm:mt-2 sm:text-5xl" >{productType === "otro" ? "Productos de La Tuba" : "Nuestra carta"}</h1>
-              <p className="mx-auto mt-1 max-w-md text-xs text-stone-500 sm:mt-2 sm:text-sm">Toca un producto para agregarlo a tu pedido.</p>
+              <h1 className="mt-1 text-3xl text-rojo-dark sm:mt-2 sm:text-4xl" >{productType === "otro" ? "Productos de La Tuba" : "Nuestra carta"}</h1>
+              <p className="mx-auto mt-1 max-w-md text-sm text-stone-600 sm:mt-2">Descubre nuestros sabores del Pacífico.</p>
             </div>
           </div>
         </div>
       </header>}
 
-      <nav aria-label="Categorías de la carta" className="sticky top-14 z-30 border-y border-rojo/15 bg-crema/95 px-5 backdrop-blur sm:top-16 sm:px-8 lg:top-20">
-        <div ref={navRef} className="mx-auto flex max-w-6xl gap-6 overflow-x-auto scrollbar-hide">
-          {[{ id: "todas", name: productType === "otro" ? "Todos" : "Toda la carta" }, ...visibleCategories].map((category) => <button key={category.id} type="button" aria-pressed={selectedCategory === category.id} onClick={() => { if (category.id === 'todas') contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); else document.getElementById(category.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} className={`min-h-10 shrink-0 border-b-2 py-2 text-xs font-semibold transition-colors sm:min-h-12 sm:py-3 sm:text-sm ${selectedCategory === category.id ? "border-rojo text-rojo" : "border-transparent text-stone-500 hover:text-rojo"}`}>{category.name}</button>)}
+      <nav aria-label="Categorías de la carta" className="sticky top-14 z-30 bg-crema/95 px-4 py-2 backdrop-blur sm:top-16 sm:px-8 lg:top-20">
+        <div ref={navRef} className="mx-auto flex max-w-6xl gap-2 overflow-x-auto scrollbar-hide">
+          {[{ id: "todas", name: productType === "otro" ? "Todos" : "Toda la carta" }, ...visibleCategories].map((category) => <button key={category.id} type="button" aria-pressed={selectedCategory === category.id} onClick={() => { if (category.id === 'todas') contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); else document.getElementById(category.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} className={`min-h-11 shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${selectedCategory === category.id ? "border-rojo bg-rojo text-crema" : "border-rojo/15 text-stone-700 hover:text-rojo"}`}>{category.name}</button>)}
         </div>
       </nav>
 
-      <div ref={contentRef} className="mx-auto max-w-6xl scroll-mt-32 px-4 pb-12 sm:px-8 sm:pb-16">
+      <div ref={contentRef} className="mx-auto max-w-6xl scroll-mt-32 px-4 pb-28 sm:px-8 sm:pb-28">
         <div className="border-b border-rojo/10 py-2 sm:flex sm:justify-end sm:py-4">
-          <div className="flex w-full items-center gap-2 border-b border-stone-300 sm:max-w-xs"><Search size={16} className="shrink-0 text-stone-400" /><input aria-label="Buscar un plato" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="¿Qué te provoca hoy?" className="min-h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-stone-400 focus-visible:ring-1 focus-visible:ring-rojo" />{query && <button type="button" onClick={() => setQuery("")} aria-label="Limpiar búsqueda" className="p-2 text-rojo"><X size={16} /></button>}</div>
+          <div className="flex w-full items-center gap-2 rounded-full border border-rojo/20 px-3 sm:max-w-md"><Search size={16} className="shrink-0 text-stone-400" /><input aria-label="Buscar en la carta" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="¿Qué te provoca hoy?" className="min-h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-stone-600 focus-visible:ring-1 focus-visible:ring-rojo" />{query && <button type="button" onClick={() => setQuery("")} aria-label="Limpiar búsqueda" className="p-2 text-rojo"><X size={16} /></button>}</div>
         </div>
         {visibleCategories.map((category) => <section key={category.id} id={category.id} data-catalog-section className="scroll-mt-32 py-5 sm:py-9">
           <div className="mb-2 border-b border-rojo/25 pb-2 text-center sm:mb-5 sm:pb-4">
@@ -72,18 +75,31 @@ export default function Catalogo({ embedded = false, showHeader = true, productT
           </div>
           <div className="grid gap-x-10 lg:grid-cols-2">
             {category.products.map((item) => {
-              return <Link to={`/armar?producto=${encodeURIComponent(item.id)}`} key={item.id} className="group grid grid-cols-[4.25rem_minmax(0,1fr)] items-start gap-3 border-b border-stone-200/80 py-3.5 outline-offset-4 focus-visible:outline-rojo sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-5 sm:py-5" aria-label={`Agregar ${item.name} al pedido`}>
-              <div className="aspect-square overflow-hidden bg-crema-dark">{item.image ? <img src={item.image} alt={`Imagen de ${item.name}`} loading="lazy" className="h-full w-full object-cover transition duration-500 motion-safe:group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-xs font-semibold text-rojo/60">La Tuba</div>}</div>
-              <div className="flex min-w-0 flex-col">
-                <h3 className="text-base font-semibold leading-snug text-stone-900 transition-colors group-hover:text-rojo sm:text-lg">{item.name}</h3>
-                <p className="mt-0.5 line-clamp-1 text-xs text-stone-500 sm:mt-1 sm:line-clamp-none sm:text-sm">{item.description}</p>
-                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 sm:mt-3"><span className="text-sm font-semibold text-rojo sm:text-base">{item.category === 'frutafresh' && isFixedPrice(item.prices) ? cop(item.prices.fijo) : ''}</span><span className="inline-flex items-center gap-1 text-xs font-semibold text-rojo"><span className="border-b border-transparent group-hover:border-rojo">Agregar</span><ArrowUpRight size={15} /></span></div>
-              </div>
-            </Link>})}
+              const count = selectedCountByProduct[item.id] ?? 0;
+              const fixed = item.category === "frutafresh" && isFixedPrice(item.prices);
+              const add = () => { addProduct(item); setAnnouncement(`${item.name} agregado al pedido`); };
+              return <article key={item.id} className="grid grid-cols-[76px_minmax(0,1fr)] items-start gap-3 border-b border-rojo/10 py-4 sm:grid-cols-[100px_minmax(0,1fr)] sm:gap-5">
+                <div className="aspect-square overflow-hidden rounded-xl bg-crema-dark">
+                  {item.image ? <img src={item.image} alt="" loading="lazy" width={100} height={100} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs font-medium text-rojo">La Tuba</div>}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold leading-snug text-rojo-dark">{item.name}</h3>
+                  <p className="mt-1 line-clamp-2 text-sm leading-snug text-stone-600">{item.description}</p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-base font-semibold tabular-nums text-rojo">{item.category === "frutafresh" && isFixedPrice(item.prices) ? cop(item.prices.fijo) : ""}</span>
+                    {fixed ? count > 0 ? <div className="flex items-center rounded-full border border-rojo/25">
+                      <button type="button" onClick={() => { removeLastOfProduct(item.id); setAnnouncement(`Una unidad de ${item.name} retirada`); }} aria-label={`Quitar una unidad de ${item.name}`} className="flex h-11 w-11 items-center justify-center text-rojo"><Minus size={16} aria-hidden="true" /></button>
+                      <span className="min-w-6 text-center text-sm tabular-nums" aria-label={`${count} unidades`}>{count}</span>
+                      <button type="button" onClick={add} aria-label={`Agregar otra unidad de ${item.name}`} className="flex h-11 w-11 items-center justify-center text-rojo"><Plus size={16} aria-hidden="true" /></button>
+                    </div> : <button type="button" onClick={add} aria-label={`Agregar ${item.name}`} className="flex min-h-11 items-center gap-2 rounded-full bg-rojo px-4 text-sm font-medium text-crema">Agregar <Plus size={16} aria-hidden="true" /></button> : <Link to={`/armar?producto=${encodeURIComponent(item.id)}`} className="flex min-h-11 items-center rounded-full bg-rojo px-4 text-sm text-crema">Elegir</Link>}
+                  </div>
+                </div>
+              </article>})}
           </div>
         </section>)}
-        {loading && <p className="py-10 text-center">Cargando la carta…</p>}
-        {error && <p role="alert" className="py-10 text-center">No se pudo cargar la carta. Inténtalo de nuevo.</p>}
+        <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
+        {loading && <p role="status" className="py-10 text-center">Cargando la carta…</p>}
+        {error && <div className="py-10 text-center"><p role="alert">No se pudo cargar la carta.</p><button type="button" onClick={() => void reload()} className="mt-3 border border-rojo px-5 py-2 text-rojo">Reintentar</button></div>}
         {!loading && !error && resultCount === 0 && <div className="py-16 text-center"><p className="font-semibold text-rojo-dark">{productType === "otro" && !query ? "Pronto encontrarás aquí nuestros productos." : "No encontramos resultados."}</p>{query && <button type="button" onClick={() => { setQuery(""); setSelectedCategory("todas"); }} className="mt-5 min-h-11 border-b border-rojo text-sm font-semibold text-rojo">Ver todos</button>}</div>}
         <div className="border-t border-rojo/15 pt-6"><p className="text-xs leading-relaxed text-stone-500">Fotografías de referencia. Consulta las presentaciones disponibles al realizar tu pedido.</p></div>
       </div>

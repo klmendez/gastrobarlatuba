@@ -56,7 +56,7 @@ export default function ExplorePage({ kind }: { kind: PageKind }) {
       <main className="mx-auto max-w-4xl">
         <header className="flex flex-col items-center gap-7 border-b border-rojo/15 pb-8 text-center sm:pb-10">
           <div>
-            <h1 className="mx-auto max-w-xl font-serif text-4xl leading-tight text-rojo-dark sm:text-5xl">{page.title}</h1>
+            <h1 className="mx-auto max-w-xl font-serif text-4xl leading-tight text-rojo-dark sm:text-4xl">{page.title}</h1>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-stone-600 sm:text-base">{page.intro}</p>
           </div>
           <img src={page.image} alt="" className="mx-auto h-40 w-40 rounded-full object-cover sm:h-52 sm:w-52" />

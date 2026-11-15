@@ -123,7 +123,7 @@ export function useOrderPricingValidation({ items, service, barrio, address, nam
         if (discount > 0) {
           for (const it of targetItems) {
             const monto = Math.round(it.baseLine * promo.valor / 100);
-            if (monto > 0) candidateItemDiscounts.push({ itemId: it.id, nombre: `🔥 ${promo.nombre}`, monto });
+            if (monto > 0) candidateItemDiscounts.push({ itemId: it.id, nombre: ` ${promo.nombre}`, monto });
           }
         }
       } else if (promo.tipo === 'valor_fijo') {
@@ -136,7 +136,7 @@ export function useOrderPricingValidation({ items, service, barrio, address, nam
           if (freeItems > 0) {
             const itemDiscount = it.baseUnit * freeItems;
             discount += itemDiscount;
-            candidateItemDiscounts.push({ itemId: it.id, nombre: `🔥 ${promo.nombre}`, monto: itemDiscount });
+            candidateItemDiscounts.push({ itemId: it.id, nombre: ` ${promo.nombre}`, monto: itemDiscount });
           }
         }
       }
@@ -206,7 +206,7 @@ export function useOrderPricingValidation({ items, service, barrio, address, nam
       }
     }
 
-    const customerOk = Boolean(name.trim() && phone.trim());
+    const customerOk = Boolean(name.trim() && /^\d{7,15}$/.test(phone.replace(/\D/g, '')));
     const deliveryOk = service !== "domicilio" || Boolean(barrio && address.trim());
     const subtotalOk = subtotal > 0;
 

@@ -25,7 +25,7 @@ export default function Stepper({ steps, onSelectStep }: Props) {
               ? "text-rojo"
               : step.status === "current"
               ? "text-gray-900"
-              : "text-gray-300";
+              : "text-gray-600";
 
           const connectorColor =
             step.status === "done" ? "bg-rojo" : "bg-gray-200";
@@ -33,7 +33,7 @@ export default function Stepper({ steps, onSelectStep }: Props) {
           return (
             <li key={step.id} className="flex items-center flex-1 min-w-0">
               <button
-                type="button"
+                type="button" aria-current={step.status === "current" ? "step" : undefined}
                 onClick={() => (interactive ? onSelectStep?.(step.id) : null)}
                 disabled={!interactive}
                 className={[
@@ -47,7 +47,7 @@ export default function Stepper({ steps, onSelectStep }: Props) {
 
                 <span
                   className={[
-                    "truncate text-[11px] sm:text-sm font-medium leading-none",
+                    "text-xs sm:text-sm font-medium leading-snug",
                     textColor,
                   ].join(" ")}
                   title={step.title}

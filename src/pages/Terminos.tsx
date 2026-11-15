@@ -8,7 +8,7 @@ function instagramUrl(value: string) {
 
 export default function Terminos() {
   return (
-    <div className="bg-neutral-950 text-white pt-24 lg:pt-28">
+    <div className="bg-crema text-rojo-dark pt-24 lg:pt-28">
       <div className="mx-auto max-w-3xl px-4 pb-16">
         <header className="mb-10 text-center">
           <h1 className="mt-2 text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
@@ -17,23 +17,21 @@ export default function Terminos() {
           <div className="mx-auto mt-4 h-px w-16 bg-white/20" />
         </header>
 
-        <section className="space-y-6 text-sm sm:text-base text-white/80 leading-relaxed">
+        <section className="space-y-6 text-sm sm:text-base text-stone-700 leading-relaxed">
           <p>
-            Nuestras gomitas están elaboradas para que disfrutes una experiencia
-            personalizada. Puedes armar tu pedido según tus gustos, combinando
-            referencias, toppings y extras disponibles.
+            Elige platos de la carta, bebidas y opciones del menú del día disponibles.
+            Puedes revisar las cantidades y dejar indicaciones para cocina antes de confirmar.
           </p>
 
           <p>
-            Los domicilios se realizan a través de{" "}
-            <span className="font-semibold text-white">Domipop</span>. El costo
-            del envío será asumido por el cliente, o bien puedes optar por recoger
-            tu pedido.
+            Puedes pedir para consumir en mesa, recoger o recibir a domicilio.
+            Si eliges domicilio, selecciona tu barrio y dirección para consultar
+            el costo de envío en el resumen.
           </p>
 
-          <p className="font-semibold text-white">
-            Todo pedido debe estar cancelado en su totalidad para poder ser
-            preparado y despachado.
+          <p>
+            Antes de confirmar, revisa los productos, el valor total y el medio de pago.
+            Elegir un medio de pago no significa que se haya realizado el cobro.
           </p>
 
           <p>

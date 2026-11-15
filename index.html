@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <style>body { margin: 0; background: #48230f; }</style>
     <link rel="icon" type="image/png" href="/la-tuba-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="La Tuba Gastrobar. El sabor de compartir. Explora nuestra carta y haz tu pedido por WhatsApp." />
@@ -23,7 +24,18 @@
         if (pagesPath.startsWith('/') && !pagesPath.startsWith('//')) history.replaceState(null, '', pagesPath);
       }
     </script>
-    <div id="root"></div>
+    <div id="root">
+      <div style="min-height:100dvh;display:grid;place-items:center;background:#48230f;color:#faf6ef;padding:24px;box-sizing:border-box;text-align:center;font-family:system-ui,sans-serif">
+        <div style="max-width:34rem">
+          <p style="font-size:14px;letter-spacing:.12em">LA TUBA GASTROBAR</p>
+          <h1 style="font-size:clamp(24px,5vw,36px);font-weight:500;line-height:1.3">Bienvenido a la experiencia en La Tuba Gastrobar.</h1>
+          <p role="status">Estamos preparando tu visita…</p>
+          <p id="boot-help" hidden>La carga está tardando. Comprueba tu conexión y <a href="" style="color:inherit">vuelve a intentarlo</a>.</p>
+          <noscript>Activa JavaScript en tu navegador para consultar el menú y hacer tu pedido.</noscript>
+        </div>
+      </div>
+    </div>
+    <script>document.getElementById('root').dataset.started = performance.now(); setTimeout(function () { const help = document.getElementById('boot-help'); if (help) help.hidden = false; }, 12000);</script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

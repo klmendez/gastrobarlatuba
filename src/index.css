@@ -1,6 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+/* Legibilidad y navegación, también con zoom y teclado. */
+html { scroll-padding-top: 6rem; }
+.public-site :focus-visible { outline: 3px solid #98632d; outline-offset: 4px; }
+.skip-link { position: fixed; left: 1rem; top: -8rem; z-index: 200; padding: .8rem 1rem; background: #fff; color: #48230f; }
+.skip-link:focus { top: 1rem; }
+.welcome-screen { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; overflow: auto; padding: 1.5rem; background: #48230f; color: #faf6ef; text-align: center; }
+.welcome-content { max-width: 34rem; margin: auto; }
+.welcome-content h1 { font-size: clamp(1.5rem, 5vw, 2.25rem); font-weight: 500; line-height: 1.35; margin: 1.5rem 0; }
+.welcome-eyebrow { font-size: .875rem; letter-spacing: .12em; text-transform: uppercase; }
+.welcome-content button { margin-top: 1.5rem; padding: .8rem 1.2rem; border: 1px solid currentColor; }
+@media (prefers-reduced-motion: reduce) {
+  .public-site *, .public-site *::before, .public-site *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 639px) {
+  .public-site input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), .public-site select, .public-site textarea { font-size: 1rem !important; }
+  .public-site button { min-height: 44px; }
+
+
+}
+
 @theme {
   --color-rojo: #653719;
   --color-rojo-dark: #48230F;
@@ -417,7 +437,7 @@ button[class~="bg-rojo"]:disabled {
 
 .admin-table-region { min-width: 0; max-width: 100%; }
 .admin-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #9e7951 #ead6b7; }
-.admin-table-scroll:focus-visible { outline: 2px solid #793713; outline-offset: 2px; }
+.admin-table-scroll.public-site :focus-visible { outline: 2px solid #793713; outline-offset: 2px; }
 .admin-table-control { display: flex; align-items: center; gap: .55rem; padding: .4rem .15rem; color: #793713; font-size: .75rem; }
 .admin-content .admin-table-control input[type="range"] { appearance: none; width: min(14rem, 50%); height: 6px; padding: 0; border: 0; border-radius: 999px !important; background: #dfc6a5 !important; cursor: pointer; }
 .admin-table-control input[type="range"]::-webkit-slider-thumb { appearance: none; width: 22px; height: 14px; border-radius: 8px; background: #793713; }
@@ -456,3 +476,20 @@ button[class~="bg-rojo"]:disabled {
     padding-bottom: 0.35rem;
   }
 }
+
+/* Focus and spacing stay visible above fixed navigation. */
+.public-site :is(button, a, input, select, textarea) { scroll-margin-block: 7rem; }
+.reservation-calendar button small { font-size: .7rem; }
+.reservation-calendar button { padding: .25rem 0; }
+.reservation-lead { color: #695342; line-height: 1.6; }
+@media (max-width: 639px) {
+  .reservation-page { padding-inline: .75rem; }
+  .reservation-form label, .reservation-form legend { font-size: .875rem; }
+
+
+}
+
+.public-cart-bar { padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+.public-site:has(.public-cart-bar) { padding-bottom: 5rem; }
+.public-site :is(p, h1, h2, h3) { overflow-wrap: break-word; }
+.public-site .text-gray-400, .public-site .text-stone-400 { color: #756450; }

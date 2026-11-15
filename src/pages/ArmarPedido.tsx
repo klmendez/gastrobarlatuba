@@ -25,6 +25,7 @@ import { useOrderPricingValidation } from "../hooks/useOrderPricingValidation";
 import { useStoreProducts } from "../hooks/useStoreProducts";
 import { usePromotions } from "../hooks/usePromotions";
 import { useToppingAvailability } from "../hooks/useToppingAvailability";
+import { useModalFocus } from "../hooks/useModalFocus";
 
 const STEP_SEQUENCE = ["productos", "configuracion", "datos", "resumen"] as const;
 type StepId = (typeof STEP_SEQUENCE)[number];
@@ -101,9 +102,8 @@ export default function ArmarPedido() {
     useOrderPricingValidation({ items, service, barrio, address, name, phone, promotions, appliedCouponCode });
 
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
-  const [stepIndex, setStepIndex] = useState(() => routerLocation.pathname.startsWith("/armar/personalizar") ? 1 : 0);
+  const [stepIndex, setStepIndex] = useState(() => items.length || routerLocation.pathname.startsWith("/armar/personalizar") ? 1 : 0);
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
-  const isSyncingRouteRef = useRef(false);
   const didMountRef = useRef(false);
   const focusSequenceRef = useRef(0);
   const manualProductCloseRef = useRef(false);
@@ -113,6 +113,8 @@ export default function ArmarPedido() {
   const [focusRequest, setFocusRequest] = useState<CustomerInfoFocusRequest>(null);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [showBeverageOffer, setShowBeverageOffer] = useState(false);
+  const beveragePanel = useRef<HTMLDivElement>(null);
+  useModalFocus(showBeverageOffer, beveragePanel, () => setShowBeverageOffer(false));
   const [beverageOfferAnswered, setBeverageOfferAnswered] = useState(false);
   const beverages = storeProducts
     .filter(product => product.categoryId?.startsWith('bebida-') && product.category === 'frutafresh' && isFixedPrice(product.prices) && product.prices.fijo > 0)
@@ -137,7 +139,7 @@ export default function ArmarPedido() {
   const customerErrors = useMemo<CustomerInfoErrors>(() => {
     return {
       name: !name.trim(),
-      phone: !phone.trim(),
+      phone: !/^\d{7,15}$/.test(phone.replace(/\D/g, '')),
       barrio: service === "domicilio" ? !barrio : false,
       address: service === "domicilio" ? !address.trim() : false,
       tableNumber: service === "local" ? !tableNumber : false,
@@ -208,8 +210,8 @@ export default function ArmarPedido() {
     if (searchParams.get("carrito") !== "1" || !items.length) return;
     const timer = window.setTimeout(() => {
       setSubmitRequested(false);
-      setCartDrawerOpen(true);
-      navigate("/armar", { replace: true });
+      setStepIndex(1);
+      navigate("/armar/personalizar", { replace: true });
     }, 0);
     return () => window.clearTimeout(timer);
   }, [items.length, navigate, searchParams]);
@@ -352,40 +354,6 @@ export default function ArmarPedido() {
     window.scrollTo({ top: targetTop, behavior: "smooth" });
   }, [stepIndex]);
 
-  useEffect(() => {
-    if (!isMobile) {
-      if (routerLocation.pathname !== "/armar") {
-        navigate("/armar", { replace: true });
-      }
-      return;
-    }
-
-    const targetPath = stepIndex === 0 ? "/armar" : "/armar/personalizar";
-    if (routerLocation.pathname !== targetPath) {
-      isSyncingRouteRef.current = true;
-      navigate(targetPath, { replace: true });
-    }
-  }, [isMobile, stepIndex, routerLocation.pathname, navigate]);
-
-  useEffect(() => {
-    if (!isMobile) return;
-    if (isSyncingRouteRef.current) {
-      isSyncingRouteRef.current = false;
-      return;
-    }
-
-    const path = routerLocation.pathname;
-    let targetStep: number | null = null;
-    if (path === "/armar" && stepIndex !== 0) {
-      targetStep = 0;
-    } else if (path.startsWith("/armar/personalizar") && stepIndex === 0) {
-      targetStep = 1;
-    }
-    if (targetStep === null) return;
-    const timer = window.setTimeout(() => setStepIndex(targetStep), 0);
-    return () => window.clearTimeout(timer);
-  }, [isMobile, routerLocation.pathname, stepIndex]);
-
   const footerCTA = (() => {
     const back =
       stepIndex > 0
@@ -484,7 +452,7 @@ export default function ArmarPedido() {
 
   const renderDatosStep = () => (
     <div className="space-y-6">
-      <button type="button" onClick={goToPreviousStep} className="text-sm font-semibold text-rojo underline">← Volver al pedido</button>
+      <button type="button" onClick={goToPreviousStep} className="text-sm font-semibold text-rojo underline"> Volver al pedido</button>
       <CustomerInfoSection
         name={name}
         setName={setName}
@@ -532,25 +500,25 @@ export default function ArmarPedido() {
           <ul className="space-y-1.5">
             {customerErrors.name && (
               <li className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-rojo">○</span> Falta tu nombre
+                <span className="text-rojo"></span> Falta tu nombre
               </li>
             )}
             {customerErrors.phone && (
               <li className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-rojo">○</span> Falta tu teléfono
+                <span className="text-rojo"></span> Falta tu teléfono
               </li>
             )}
             {service === "domicilio" && customerErrors.barrio && (
               <li className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-rojo">○</span> Falta seleccionar un barrio
+                <span className="text-rojo"></span> Falta seleccionar un barrio
               </li>
             )}
             {service === "domicilio" && customerErrors.address && (
               <li className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-rojo">○</span> Falta tu dirección
+                <span className="text-rojo"></span> Falta tu dirección
               </li>
             )}
-            {customerErrors.tableNumber && <li className="flex items-center gap-2 text-sm text-gray-600"><span className="text-rojo">○</span> Falta seleccionar tu mesa</li>}
+            {customerErrors.tableNumber && <li className="flex items-center gap-2 text-sm text-gray-600"><span className="text-rojo"></span> Falta seleccionar tu mesa</li>}
           </ul>
         </div>
       )}
@@ -633,13 +601,13 @@ export default function ArmarPedido() {
         {stepContent}
       </div>
 
-      {currentStepId !== 'datos' && <div className="sticky bottom-7 z-40 flex items-center gap-2 border-t border-gray-200 bg-white px-4 py-3">
+      {currentStepId !== 'datos' && <div className="sticky bottom-0 z-40 flex items-center gap-2 border-t border-gray-200 bg-white px-4 py-3">
         <button
           type="button"
           onClick={footerCTA.back.onClick}
           disabled={footerCTA.back.disabled}
           className={[
-            "flex-1 border px-3 py-2.5 text-[10px] font-medium uppercase tracking-[0.15em]",
+            "flex-1 border px-3 py-2.5 text-xs font-medium",
             footerBackDisabled
               ? "border-gray-200 text-gray-300"
               : "border-gray-300 text-gray-600 active:bg-gray-100",
@@ -653,7 +621,7 @@ export default function ArmarPedido() {
           onClick={footerCTA.next.onClick}
           disabled={footerCTA.next.disabled}
           className={[
-            "flex-[1.5] border px-3 py-2.5 text-[10px] font-medium uppercase tracking-[0.15em]",
+            "flex-[1.5] border px-3 py-2.5 text-xs font-medium",
             !footerNextDisabled
               ? currentStepId === "resumen"
                 ? "border-rojo bg-rojo text-white active:bg-rojo-dark"
@@ -681,7 +649,7 @@ export default function ArmarPedido() {
     <>
       {mobileDetailMode ? mobileDetailLayout : desktopOrCatalogLayout}
 
-      {showBeverageOffer && <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="beverage-offer-title">
+      {showBeverageOffer && <div ref={beveragePanel} tabIndex={-1} className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="beverage-offer-title">
         <div className="flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden bg-crema p-5 shadow-xl sm:p-6">
           <h2 id="beverage-offer-title" className="font-serif text-2xl text-rojo-dark">¿Quieres llevar una bebida?</h2>
           <p className="mt-2 text-sm text-stone-600">Tu pedido está guardado. Puedes agregar una bebida o continuar sin ella.</p>

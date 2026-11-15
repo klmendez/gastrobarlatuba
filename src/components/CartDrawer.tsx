@@ -87,6 +87,31 @@ export default function CartDrawer({
   const [whatsappUrl, setWhatsappUrl] = useState('');
   const [confirmedDetails, setConfirmedDetails] = useState<{ items: (OrderItem & { baseLine: number; line?: number })[]; subtotal: number; delivery: number; total: number; descuentoTotal: number; service: Service; tableNumber: string; address: string; barrio: string; paymentMethod: PaymentMethod } | null>(null);
   const [confirmationPanel, setConfirmationPanel] = useState<'review' | 'details' | null>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const scope = drawerRef.current?.querySelector<HTMLElement>('[data-confirmation-panel]') || drawerRef.current;
+    scope?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmitting) {
+        event.preventDefault();
+        if (confirmationPanel) setConfirmationPanel(null); else closeRef.current();
+      }
+      if (event.key !== 'Tab' || !scope) return;
+      const nodes = [...scope.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]')].filter(node => node.getClientRects().length && !node.closest('[inert]'));
+      const first = nodes[0], last = nodes.at(-1);
+      if (!first) { event.preventDefault(); scope.focus(); return; }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === scope)) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === scope)) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', trap);
+    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', trap); previous?.focus({ preventScroll: true }); };
+  }, [isOpen, confirmationPanel, submitStatus, isSubmitting]);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewStatus, setReviewStatus] = useState('');
@@ -288,7 +313,7 @@ export default function CartDrawer({
         }
 
         void clientData; // El RPC de Supabase ya guardó el contacto junto con el pedido.
-        console.log('✅ Cliente guardado/actualizado correctamente');
+        console.log(' Cliente guardado/actualizado correctamente');
       } catch (clientError) {
         console.error('❌ Error guardando cliente:', clientError);
       }
@@ -352,7 +377,7 @@ export default function CartDrawer({
       />
       
       {/* Drawer */}
-      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
+      <div ref={drawerRef} role="dialog" aria-modal="true" aria-label={submitStatus === 'success' ? 'Pedido recibido' : 'Resumen del pedido'} tabIndex={-1} className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
         <div className="relative flex h-full flex-col">
           {isSubmitting && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-crema px-6 text-center">
@@ -398,12 +423,12 @@ export default function CartDrawer({
               </div>
             </div>
           )}
-          {submitStatus === 'success' && confirmationPanel && <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="confirmation-panel-title">
+          {submitStatus === 'success' && confirmationPanel && <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 p-4" data-confirmation-panel tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="confirmation-panel-title">
             <div className="max-h-[85dvh] w-full overflow-y-auto bg-crema p-5 text-left shadow-xl">
               <div className="flex items-center justify-between gap-4"><h3 id="confirmation-panel-title" className="font-serif text-2xl text-rojo-dark">{confirmationPanel === 'review' ? 'Deja tu reseña' : 'Detalle de tu pedido'}</h3><button type="button" onClick={() => setConfirmationPanel(null)} aria-label="Cerrar ventana" className="rounded p-2 text-rojo"><X size={20} /></button></div>
               {confirmationPanel === 'review' ? <form onSubmit={event => void submitReview(event)} className="mt-4">
                 <p className="text-sm text-stone-600">¿Cómo fue tu experiencia?</p>
-                <fieldset className="mt-3"><legend className="text-xs font-semibold">Selecciona una calificación</legend><div className="mt-1 flex gap-1" role="radiogroup" aria-label="Calificación de la reseña">{[1, 2, 3, 4, 5].map(value => <button key={value} type="button" role="radio" aria-checked={reviewRating === value} aria-label={`${value} ${value === 1 ? 'estrella' : 'estrellas'}`} disabled={reviewSubmitted} onClick={() => { setReviewRating(value); setReviewStatus(''); }} className="p-1 text-amber-600 disabled:opacity-70"><Star size={32} fill={value <= reviewRating ? 'currentColor' : 'none'} /></button>)}</div></fieldset>
+                <fieldset className="mt-3"><legend className="text-xs font-semibold">Selecciona una calificación</legend><div className="mt-1 flex gap-1" role="group" aria-label="Calificación de la reseña">{[1, 2, 3, 4, 5].map(value => <button key={value} type="button" aria-pressed={reviewRating === value} aria-label={`${value} ${value === 1 ? 'estrella' : 'estrellas'}`} disabled={reviewSubmitted} onClick={() => { setReviewRating(value); setReviewStatus(''); }} className="flex h-11 w-11 items-center justify-center text-amber-700 disabled:opacity-70"><Star size={32} fill={value <= reviewRating ? 'currentColor' : 'none'} /></button>)}</div></fieldset>
                 <label className="mt-4 block text-sm font-semibold">Comentario<textarea required minLength={5} maxLength={2000} rows={4} value={reviewComment} disabled={reviewSubmitted} onChange={event => setReviewComment(event.target.value)} placeholder="Cuéntanos tu experiencia" className="mt-2 w-full border border-rojo/25 bg-white p-3 font-normal" /></label>
                 {!reviewSubmitted && <button disabled={reviewBusy} type="submit" className="mt-3 w-full bg-rojo px-4 py-3 font-semibold text-crema disabled:opacity-50">{reviewBusy ? 'Enviando…' : 'Enviar reseña'}</button>}
                 {reviewStatus && <p role="status" className="mt-3 text-sm text-rojo">{reviewStatus}</p>}
@@ -416,7 +441,7 @@ export default function CartDrawer({
             </div>
           </div>}
           {/* Header */}
-          <div className="relative flex items-center justify-center border-b border-gray-200 p-4">
+          <div inert={submitStatus === 'success' || isSubmitting || undefined} className="relative flex items-center justify-center border-b border-gray-200 p-4">
             <h2 className="text-center text-lg font-semibold text-black">Finalizar Pedido</h2>
             <button
               onClick={onClose}
@@ -428,7 +453,7 @@ export default function CartDrawer({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 pb-8">
+          <div inert={submitStatus === 'success' || isSubmitting || undefined} className="flex-1 min-h-0 overflow-y-auto p-4 pb-8">
             {/* Resumen del pedido */}
             <div className="mb-6 border-b border-gray-200 pb-5">
               <h3 className="mb-3 text-center text-sm font-semibold text-black">Tu pedido</h3>
@@ -441,7 +466,7 @@ export default function CartDrawer({
                       <span className="shrink-0 font-semibold text-rojo">{cop(item.baseLine)}</span>
                     </div>
                     {item.note?.trim() && (
-                      <p className="mt-1 text-xs leading-relaxed text-gray-500">IndicaciÃ³n: {item.note.trim()}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-gray-500">Indicación: {item.note.trim()}</p>
                     )}
                   </div>
                 ))}
@@ -483,7 +508,7 @@ export default function CartDrawer({
                               onApplyCoupon();
                             }
                           }}
-                          placeholder="Código de cupón"
+                          aria-label="Código de cupón" placeholder="Código de cupón"
                           className="flex-1 min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono uppercase outline-none focus:border-black"
                         />
                         <button
@@ -633,7 +658,7 @@ export default function CartDrawer({
                   Guardando...
                 </div>
               ) : submitStatus === 'success' ? (
-                '✅ Enviado'
+                ' Enviado'
               ) : (
                 <>
                   <CheckCircle size={18} />
