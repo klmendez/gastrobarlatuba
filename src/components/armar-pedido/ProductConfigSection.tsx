@@ -64,7 +64,7 @@ export default function ProductConfigSection({
 
     <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
       <button type="button" onClick={onAddAnotherProduct} className="min-h-11 border border-stone-300 px-5 text-sm font-semibold text-stone-600">Agregar otro plato</button>
-      <button type="button" onClick={onGoToNext} className="hidden min-h-11 bg-rojo px-6 text-sm font-semibold text-crema sm:block">Continuar con mis datos</button>
+      <button type="button" onClick={onGoToNext} className="hidden min-h-11 items-center gap-2 rounded-full bg-rojo px-5 text-sm font-medium text-crema transition-colors hover:bg-rojo-dark sm:flex">Continuar con mis datos <span aria-hidden="true">→</span></button>
     </div>
   </section>;
 }

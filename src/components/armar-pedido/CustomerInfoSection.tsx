@@ -41,9 +41,9 @@ function NextButton({ onClick }: { onClick: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="w-full sm:w-auto border border-rojo bg-rojo px-8 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition active:bg-rojo-dark"
+        className="min-h-11 w-full rounded-full bg-rojo px-5 text-sm font-medium text-crema transition-colors hover:bg-rojo-dark active:bg-rojo-dark sm:w-auto"
       >
-        Siguiente 
+        Siguiente <span aria-hidden="true">→</span>
       </button>
     </div>
   );
@@ -55,16 +55,16 @@ function BackNextButtons({ onBack, onNext }: { onBack: () => void; onNext: () =>
       <button
         type="button"
         onClick={onBack}
-        className="border border-gray-900 bg-gray-900 px-6 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-black"
+        className="min-h-11 rounded-full border border-stone-300 px-5 text-sm font-medium text-stone-700 transition-colors hover:border-rojo hover:text-rojo"
       >
          Atrás
       </button>
       <button
         type="button"
         onClick={onNext}
-        className="flex-1 border border-rojo bg-rojo px-8 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition active:bg-rojo-dark"
+        className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-rojo px-5 text-sm font-medium text-crema transition-colors hover:bg-rojo-dark active:bg-rojo-dark"
       >
-        Siguiente 
+        Siguiente <span aria-hidden="true">→</span>
       </button>
     </div>
   );

@@ -621,12 +621,10 @@ export default function ArmarPedido() {
           onClick={footerCTA.next.onClick}
           disabled={footerCTA.next.disabled}
           className={[
-            "flex-[1.5] border px-3 py-2.5 text-xs font-medium",
+            "flex min-h-11 flex-[1.5] items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-colors",
             !footerNextDisabled
-              ? currentStepId === "resumen"
-                ? "border-rojo bg-rojo text-white active:bg-rojo-dark"
-                : "border-rojo bg-rojo text-white active:bg-rojo-dark"
-              : "border-gray-200 text-gray-300",
+              ? "bg-rojo text-crema hover:bg-rojo-dark active:bg-rojo-dark"
+              : "bg-gray-200 text-gray-400",
           ].join(" ")}
         >
           {footerCTA.next.label}
