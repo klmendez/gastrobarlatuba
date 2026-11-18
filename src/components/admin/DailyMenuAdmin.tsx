@@ -48,7 +48,9 @@ export default function DailyMenuAdmin() {
   const save = async (event: React.FormEvent) => {
     event.preventDefault(); setSaving(true); setMessage("");
     try {
-      const clean = { ...menu, soups: menu.soups.map(v => v.trim()).filter(Boolean), sides: menu.sides.map(v => v.trim()).filter(Boolean), proteins: menu.proteins.map(v => v.trim()).filter(Boolean), specials: menu.specials.filter((item) => item.name.trim()) };
+      const styleByDay = ["clasico", "tropical", "elegante"];
+      const styleIndex = Math.abs(Math.floor(new Date(`${menu.scheduledDate}T12:00:00`).getTime() / 86400000)) % styleByDay.length;
+      const clean = { ...menu, posterStyle: styleByDay[styleIndex], soups: menu.soups.map(v => v.trim()).filter(Boolean), sides: menu.sides.map(v => v.trim()).filter(Boolean), proteins: menu.proteins.map(v => v.trim()).filter(Boolean), specials: menu.specials.filter((item) => item.name.trim()) };
       const id = await DailyMenuService.save(clean); setMenu({ ...clean, id }); setMessage("Menú programado correctamente."); await load();
     } catch (error: unknown) { setMessage(error instanceof Error ? error.message : "No se pudo guardar."); } finally { setSaving(false); }
   };

@@ -12,6 +12,7 @@ export type DailyMenuConfig = {
   id?: string;
   title: string;
   dateLabel: string;
+  posterStyle: string;
   price: number;
   active: boolean;
   scheduledDate: string;
@@ -23,7 +24,7 @@ export type DailyMenuConfig = {
 };
 
 export const EMPTY_DAILY_MENU: DailyMenuConfig = {
-  title: "Menú del día", dateLabel: "Hoy", price: 0, active: false,
+  title: "Menú del día", dateLabel: "Hoy", posterStyle: "clasico", price: 0, active: false,
   scheduledDate: todayInBogota(),
   soups: ["Sopa de carne", "Sancocho de bagre", "Sancocho de guineo"],
   sides: ["Frijoles", "Lentejas", "Arvejas"],
@@ -32,13 +33,13 @@ export const EMPTY_DAILY_MENU: DailyMenuConfig = {
 };
 
 type DailyMenuRow = {
-  id: string; title: string; date_label: string; price: number; active: boolean;
+  id: string; title: string; date_label: string; poster_style?: string; price: number; active: boolean;
   scheduled_date: string; soups: string[]; sides: string[]; proteins: string[];
   specials: DailyMenuSpecial[]; updated_at: string;
 };
 
 const fromRow = (row: DailyMenuRow): DailyMenuConfig => ({
-  id: row.id, title: row.title, dateLabel: row.date_label, price: row.price,
+  id: row.id, title: row.title, dateLabel: row.date_label, posterStyle: row.poster_style ?? "clasico", price: row.price,
   active: row.active, scheduledDate: row.scheduled_date, soups: row.soups ?? [],
   sides: row.sides ?? [], proteins: row.proteins ?? [],
   specials: (row.specials ?? []).map((item) => typeof item === "string" ? { name: item, price: 0 } : item),
@@ -63,6 +64,7 @@ export const DailyMenuService = {
     if (!supabase) throw new Error("Supabase no está configurado");
     const row = {
       ...(menu.id ? { id: menu.id } : {}), title: menu.title, date_label: menu.dateLabel,
+      poster_style: menu.posterStyle,
       price: menu.price, active: menu.active, scheduled_date: menu.scheduledDate,
       soups: menu.soups, sides: menu.sides, proteins: menu.proteins, specials: menu.specials,
       updated_at: new Date().toISOString(),

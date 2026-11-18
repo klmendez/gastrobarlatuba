@@ -20,6 +20,7 @@ create table if not exists public.daily_menus (
   scheduled_date date not null unique,
   title text not null default 'Menú del día',
   date_label text not null default 'Hoy',
+  poster_style text not null default 'clasico',
   price integer not null check (price >= 0),
   active boolean not null default false,
   soups jsonb not null default '[]'::jsonb,
