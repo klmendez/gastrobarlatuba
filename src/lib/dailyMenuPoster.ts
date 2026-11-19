@@ -46,7 +46,7 @@ export async function generateDailyMenuPoster(menu: DailyMenuConfig, style = men
   ].map(group => ({ ...group, lines: group.values.map(value => value.trim()).filter(Boolean).flatMap(value => wrap(ctx!, value, 790)) })).filter(group => group.lines.length);
   if (!groups.length) throw new Error('Agrega al menos una opción al menú antes de generar la imagen.');
   const contentHeight = groups.reduce((sum, group) => sum + 75 + group.lines.length * 57 + 28, 0);
-  const height = Math.max(1920, 510 + contentHeight + 340);
+  const height = Math.max(1920, 510 + contentHeight + 430);
   if (height > 12000) throw new Error('El menú es demasiado largo para una sola imagen. Reduce las opciones y vuelve a intentarlo.');
   canvas.height = height;
   ctx = canvas.getContext('2d')!;
@@ -75,10 +75,11 @@ export async function generateDailyMenuPoster(menu: DailyMenuConfig, style = men
     for (const line of group.lines) { ctx.fillText(line, WIDTH / 2, y); y += 57; }
     ctx.strokeStyle = ink; ctx.beginPath(); ctx.moveTo(180, y - 15); ctx.lineTo(900, y - 15); ctx.stroke(); y += 28;
   }
-  const footerY = Math.max(y + 75, height - 260);
+  const footerY = Math.max(y + 75, height - 330);
   ctx.fillStyle = DARK; ctx.font = '600 32px Poppins, sans-serif'; ctx.fillText('SERVICIO A DOMICILIO', WIDTH / 2, footerY);
   ctx.font = '500 46px Poppins, sans-serif'; ctx.fillText(WHATSAPP_PHONE, WIDTH / 2, footerY + 58);
   ctx.font = '400 30px Poppins, sans-serif'; ctx.fillText('Cra. 7 # 2-38 · Centro, Popayán', WIDTH / 2, footerY + 120, 920);
+  ctx.font = '600 32px Poppins, sans-serif'; ctx.fillText('¡Aquí puedes hacer tu pedido!', WIDTH / 2, footerY + 190, 920);
   const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('No se pudo exportar la imagen. Inténtalo de nuevo.');
   return blob;
