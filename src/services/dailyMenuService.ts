@@ -2,6 +2,12 @@ import { supabase } from "../lib/supabase";
 
 export type DailyMenuSpecial = { name: string; price: number };
 
+const posterStyleForDate = (date: string) => {
+  const [year, month, day] = date.split("-").map(Number);
+  const utcDay = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+  return ["clasico", "tropical", "elegante"][((utcDay % 3) + 3) % 3];
+};
+
 export function todayInBogota() {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
@@ -33,13 +39,13 @@ export const EMPTY_DAILY_MENU: DailyMenuConfig = {
 };
 
 type DailyMenuRow = {
-  id: string; title: string; date_label: string; poster_style?: string; price: number; active: boolean;
+  id: string; title: string; date_label: string; price: number; active: boolean;
   scheduled_date: string; soups: string[]; sides: string[]; proteins: string[];
   specials: DailyMenuSpecial[]; updated_at: string;
 };
 
 const fromRow = (row: DailyMenuRow): DailyMenuConfig => ({
-  id: row.id, title: row.title, dateLabel: row.date_label, posterStyle: row.poster_style ?? "clasico", price: row.price,
+  id: row.id, title: row.title, dateLabel: row.date_label, posterStyle: posterStyleForDate(row.scheduled_date), price: row.price,
   active: row.active, scheduledDate: row.scheduled_date, soups: row.soups ?? [],
   sides: row.sides ?? [], proteins: row.proteins ?? [],
   specials: (row.specials ?? []).map((item) => typeof item === "string" ? { name: item, price: 0 } : item),
@@ -64,7 +70,6 @@ export const DailyMenuService = {
     if (!supabase) throw new Error("Supabase no está configurado");
     const row = {
       ...(menu.id ? { id: menu.id } : {}), title: menu.title, date_label: menu.dateLabel,
-      poster_style: menu.posterStyle,
       price: menu.price, active: menu.active, scheduled_date: menu.scheduledDate,
       soups: menu.soups, sides: menu.sides, proteins: menu.proteins, specials: menu.specials,
       updated_at: new Date().toISOString(),
