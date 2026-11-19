@@ -764,8 +764,8 @@ export default function AdminDashboard() {
 
   const metricItems = [
     { label: 'Total', value: stats.total },
-    { label: 'Sin Pagar', value: stats.sinPagar, accent: 'text-amber-600' },
-    { label: 'Pagado', value: stats.pagado, accent: 'text-emerald-600' },
+    { label: 'Estado: sin pagar', value: stats.sinPagar, accent: 'text-amber-600' },
+    { label: 'Estado: pagado', value: stats.pagado, accent: 'text-emerald-600' },
     { label: 'Preparando', value: stats.preparando, accent: 'text-blue-600' },
     { label: 'En Camino', value: stats.enCamino, accent: 'text-violet-600' },
     { label: 'Entregado', value: stats.entregado, accent: 'text-gray-500' },
@@ -999,6 +999,8 @@ export default function AdminDashboard() {
                             <td className="px-4 py-3 align-top">
                               <div className="font-semibold text-gray-900">{cop(order.total)}</div>
                               <div className="text-[11px] text-gray-400">{order.formaPago}</div>
+                              <div className="text-[11px] text-gray-600">Cobrado: {cop(order.paidTotal ?? 0)}</div>
+                              <div className="text-[11px] text-amber-700">Saldo: {cop(Math.max(0, order.total - (order.paidTotal ?? 0)))}</div>
                               {(order.descuentoTotal ?? 0) > 0 && (
                                 <div className="mt-0.5 inline-flex items-center rounded-full bg-rojo-light px-1.5 py-0.5 text-[10px] font-semibold text-rojo">
                                   -{cop(order.descuentoTotal!)} desc.
@@ -1013,7 +1015,7 @@ export default function AdminDashboard() {
                                 onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
                                 className={`text-xs font-semibold px-2 py-1 rounded border cursor-pointer outline-none ${colorClass}`}
                               >
-                                {(Object.keys(STATUS_LABELS) as (OrderStatus | 'todos')[]).filter(s => s !== 'todos').map(s => (
+                                {(Object.keys(STATUS_LABELS) as (OrderStatus | 'todos')[]).filter(s => s !== 'todos' && (s !== 'en_camino' || order.servicio === 'domicilio' || order.estado === 'en_camino')).map(s => (
                                   <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                                 ))}
                               </select>

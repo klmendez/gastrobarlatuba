@@ -1,24 +1,9 @@
 import type { PedidoFirestore, OrderStatus } from '../types/order';
 import { cop } from '../lib/format';
-import { WHATSAPP_PHONE, NEQUI_PHONE } from '../data/constants';
+import { WHATSAPP_PHONE } from '../data/constants';
 
 export class WhatsAppNotificationService {
   private static readonly BUSINESS_PHONE = `57${WHATSAPP_PHONE}`;
-
-  // Mensajes predefinidos para diferentes estados
-  private static readonly STATUS_MESSAGES: Record<OrderStatus, (order: PedidoFirestore & { id: string }) => string> = {
-    no_pagado: (order) => `Hola ${order.cliente.nombres}! 👋\n\nTu pedido ${order.numeroOrden} ha sido recibido por ${cop(order.total)}.\n\n⏰ *Pendiente de pago*\nPor favor realiza el pago para confirmar tu pedido.\n\n💳 Método: ${order.formaPago}\n${order.formaPago === 'Transferencia' ? `🏦 Nequi: ${NEQUI_PHONE}` : '💵 Pago en efectivo al recibir'}\n\n¡Gracias por elegir La Tuba Gastrobar! 🌶️`,
-
-    pagado: (order) => `¡Excelente ${order.cliente.nombres}! ✅\n\nTu pago ha sido confirmado.\nPedido: ${order.numeroOrden}\nTotal: ${cop(order.total)}\n\n👨‍🍳 *Ahora preparamos tu pedido*\nTe notificaremos cuando esté listo.\n\n${order.servicio === 'domicilio' ? '🛵 Lo llevaremos a tu dirección' : '🥡 Podrás recogerlo en nuestro punto'}\n\n¡La Tuba Gastrobar en camino! 🌶️🔥`,
-
-    preparando: (order) => `¡Hola ${order.cliente.nombres}! 👨‍🍳\n\nTu pedido ${order.numeroOrden} está siendo preparado con mucho amor.\n\n🔥 *En la cocina ahora mismo*\n${order.servicio === 'domicilio' ? 'Pronto saldremos hacia tu dirección.' : 'Te avisaremos cuando esté listo para recoger.'}\n\n⏱️ Tiempo estimado: 15-25 minutos\n\n¡La espera valdrá la pena! 🌶️✨`,
-
-    en_camino: (order) => `🛵 ¡En camino ${order.cliente.nombres}!\n\nTu pedido ${order.numeroOrden} ya salió hacia tu dirección.\n\n📍 *Dirección de entrega:*\n${order.cliente.direccion}\n\n⏱️ Tiempo estimado: 10-20 minutos\n${order.cliente.coordenadas ? '📱 Tu ubicación en tiempo real nos ayuda a llegar más rápido.' : ''}\n\n¡Prepárate para el La Tuba Gastrobar! 🌶️🔥`,
-
-    entregado: (order) => `¡Entregado! 🎉\n\nGracias ${order.cliente.nombres} por tu pedido ${order.numeroOrden}.\n\n✅ *Pedido completado*\nEsperamos que hayas disfrutado tu La Tuba Gastrobar.\n\n⭐ *¿Cómo estuvo todo?*\nTu opinión nos ayuda a mejorar.\n\n¡Vuelve pronto por más sabor! 🌶️❤️`,
-
-    cancelado: (order) => `Hola ${order.cliente.nombres} 😔\n\nLamentamos informarte que tu pedido ${order.numeroOrden} ha sido cancelado.\n\n❌ *Motivo:* [Especificar motivo]\n\n💰 Si realizaste algún pago, será reembolsado en las próximas 24 horas.\n\n📞 Para más información, contáctanos.\n\n¡Esperamos verte pronto! 🌶️`
-  };
 
   // Mensaje especial para cambios en productos
   private static readonly PRODUCT_CHANGE_MESSAGE = (order: PedidoFirestore & { id: string }) => 
@@ -35,7 +20,18 @@ export class WhatsAppNotificationService {
 
   // Enviar notificación al cliente sobre cambio de estado
   static sendStatusNotification(order: PedidoFirestore & { id: string }, newStatus: OrderStatus): void {
-    const message = this.STATUS_MESSAGES[newStatus](order);
+    const name = order.cliente.nombres || 'cliente';
+    const code = order.numeroOrden;
+    const destination = order.servicio === 'local' ? 'Te lo serviremos en La Tuba.' : order.servicio === 'llevar' ? 'Te avisaremos cuando esté listo para recoger.' : 'Lo llevaremos a tu dirección.';
+    const messages: Record<OrderStatus, string> = {
+      no_pagado: `Hola ${name}, el pedido ${code} tiene un saldo pendiente de ${cop(Math.max(0, order.total - (order.paidTotal ?? 0)))}. Gracias por elegir La Tuba.`,
+      pagado: `Hola ${name}, actualizamos el estado del pedido ${code}. ${destination} Gracias por elegir La Tuba.`,
+      preparando: `Hola ${name}, estamos preparando tu pedido ${code}. ${destination}`,
+      en_camino: order.servicio === 'domicilio' ? `Hola ${name}, tu pedido ${code} va en camino${order.cliente.direccion ? ` a ${order.cliente.direccion}` : ''}.` : order.servicio === 'llevar' ? `Hola ${name}, tu pedido ${code} está listo para recoger en La Tuba.` : `Hola ${name}, tu pedido ${code} está listo para servir en La Tuba.`,
+      entregado: order.servicio === 'local' ? `¡Gracias por disfrutar en La Tuba, ${name}! Esperamos verte pronto.` : `¡Gracias por tu pedido, ${name}! Esperamos que lo disfrutes.`,
+      cancelado: `Hola ${name}, tu pedido ${code} ha sido cancelado. Si tienes alguna duda, contáctanos.`,
+    };
+    const message = messages[newStatus];
     this.sendWhatsAppMessage(order.cliente.celular, message);
   }
 

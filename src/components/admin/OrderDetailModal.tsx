@@ -591,10 +591,15 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                     },
                   ];
 
+                  const applicablePresets = presets.filter(preset => (preset.label !== 'En camino' || order.servicio === 'domicilio') && (preset.label !== 'Listo para recoger' || order.servicio === 'llevar')).map(preset => {
+                    if (order.servicio === 'local' && preset.label === 'Entregado') return { label: 'Agradecimiento', text: `¡Gracias por disfrutar en La Tuba, ${order.cliente.nombres}! Esperamos verte pronto.` };
+                    if (preset.label === 'Pago pendiente') return { ...preset, text: `Hola ${order.cliente.nombres}, tu pedido ${order.numeroOrden} tiene un saldo pendiente de ${cop(Math.max(0, order.total - (order.paidTotal ?? 0)))}. Gracias.` };
+                    return preset;
+                  });
                   return (
                     <>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {presets.map((preset, idx) => (
+                        {applicablePresets.map((preset, idx) => (
                           <button key={idx} onClick={() => setEditMsg(preset.text)}
                             className="text-xs font-semibold px-3 py-1.5 rounded-full border border-gray-200 hover:border-red-400 bg-gray-50 hover:bg-white transition-colors text-left">
                             {preset.label}
