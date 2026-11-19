@@ -27,7 +27,7 @@ export default function DailyMenuAdmin() {
     try {
       const savedMenu = (await DailyMenuService.list()).find(item => item.id === menu.id);
       if (!savedMenu) throw new Error('No se encontró el menú guardado. Vuelve a cargarlo.');
-      const styles = [{ style: "clasico", label: "Cl?sico" }, { style: "tropical", label: "Tropical" }, { style: "elegante", label: "Elegante" }];
+      const styles = [{ style: "clasico", label: "Cl?sico" }, { style: "tropical", label: "R?stico" }, { style: "elegante", label: "Ejecutivo" }];
       const variants = await Promise.all(styles.map(async item => {
         const image = await generateDailyMenuPoster(savedMenu, item.style);
         return { ...item, url: URL.createObjectURL(image), filename: `menu-la-tuba-${savedMenu.scheduledDate}-${item.style}.png`, date: savedMenu.scheduledDate, image };
