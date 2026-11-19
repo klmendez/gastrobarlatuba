@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Image as ImageIcon, Plus, Save, Share2, Trash2, X } from "lucide-react";
 import { DailyMenuService, EMPTY_DAILY_MENU, todayInBogota, type DailyMenuConfig, type DailyMenuSpecial } from "../../services/dailyMenuService";
 import { cop } from "../../lib/format";
@@ -13,10 +13,13 @@ export default function DailyMenuAdmin() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [poster, setPoster] = useState<{ url: string; filename: string; date: string; image: Blob } | null>(null);
+  const [posters, setPosters] = useState<{ style: string; label: string; url: string; filename: string; date: string; image: Blob }[]>([]);
+  const posterUrls = useRef<string[]>([]);
+  const [selectedPosterStyle, setSelectedPosterStyle] = useState("clasico");
+  const poster = posters.find(item => item.style === selectedPosterStyle) ?? posters[0] ?? null;
   const load = () => DailyMenuService.list().then(setMenus);
   useEffect(() => { void load().catch(() => setMessage("No se pudieron cargar los menús. Revisa tu conexión.")); }, []);
-  useEffect(() => () => { if (poster) URL.revokeObjectURL(poster.url); }, [poster]);
+  useEffect(() => () => { posterUrls.current.forEach(url => URL.revokeObjectURL(url)); }, []);
 
   const generatePoster = async () => {
     if (!menu.id || generating) return;
@@ -24,8 +27,14 @@ export default function DailyMenuAdmin() {
     try {
       const savedMenu = (await DailyMenuService.list()).find(item => item.id === menu.id);
       if (!savedMenu) throw new Error('No se encontró el menú guardado. Vuelve a cargarlo.');
-      const image = await generateDailyMenuPoster(savedMenu);
-      setPoster({ url: URL.createObjectURL(image), filename: `menu-la-tuba-${savedMenu.scheduledDate}.png`, date: savedMenu.scheduledDate, image });
+      const styles = [{ style: "clasico", label: "Cl?sico" }, { style: "tropical", label: "Tropical" }, { style: "elegante", label: "Elegante" }];
+      const variants = await Promise.all(styles.map(async item => {
+        const image = await generateDailyMenuPoster(savedMenu, item.style);
+        return { ...item, url: URL.createObjectURL(image), filename: `menu-la-tuba-${savedMenu.scheduledDate}-${item.style}.png`, date: savedMenu.scheduledDate, image };
+      }));
+      posterUrls.current.forEach(url => URL.revokeObjectURL(url));
+      posterUrls.current = variants.map(item => item.url);
+      setPosters(variants); setSelectedPosterStyle("clasico");
     } catch (error) { setMessage(error instanceof Error ? error.message : 'No se pudo generar la imagen.'); }
     finally { setGenerating(false); }
   };
@@ -88,6 +97,6 @@ export default function DailyMenuAdmin() {
       {menus.length === 0 && <p className="daily-hint">Aún no hay menús programados.</p>}
       {menus.map((item) => <button key={item.id} type="button" onClick={() => { setMenu(item); setMessage(""); }} className={`daily-list-item ${menu.id === item.id ? "is-selected" : ""}`}><b>{item.dateLabel}</b><span>{item.scheduledDate} · {cop(item.price)} · {item.active ? "Activo" : "Oculto"}</span></button>)}
     </aside>
-    {poster && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-labelledby="poster-title"><div className="flex max-h-[90dvh] w-full max-w-xl flex-col bg-[#fff8e8] p-4"><div className="flex items-center justify-between gap-3"><div><h2 id="poster-title" className="font-serif text-xl">Imagen del menú</h2><p className="text-xs text-[#806958]">Menú guardado para {poster.date}</p></div><button type="button" onClick={() => setPoster(null)} aria-label="Cerrar imagen" className="p-2"><X size={20} /></button></div><div className="my-4 min-h-0 flex-1 overflow-y-auto"><img src={poster.url} alt={`Imagen generada del menú para ${poster.date}`} className="mx-auto h-auto max-w-full" /></div><div className="mb-3 flex flex-wrap gap-2"><button type="button" onClick={() => void sharePoster()} className="inline-flex min-h-11 items-center gap-2 border border-[#793713] px-4 py-2 text-sm"><Share2 size={17} /> Compartir imagen</button><a href="https://business.facebook.com/latest/composer" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center border border-[#793713] px-4 py-2 text-sm">Abrir Meta Business Suite</a></div>{message && <p role="status" className="mb-3 text-sm">{message}</p>}<p className="mb-3 text-xs">Para programar la historia, descarga la imagen y s?bela en Meta Business Suite. Compartir no programa ni publica autom?ticamente.</p><a href={poster.url} download={poster.filename} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#793713] px-4 py-3 text-sm font-semibold text-white"><Download size={17} /> Descargar imagen PNG</a></div></div>}
+    {poster && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-labelledby="poster-title"><div className="flex max-h-[90dvh] w-full max-w-xl flex-col bg-[#fff8e8] p-4"><div className="flex items-center justify-between gap-3"><div><h2 id="poster-title" className="font-serif text-xl">Imagen del menú</h2><p className="text-xs text-[#806958]">Menú guardado para {poster.date}</p></div><button type="button" onClick={() => { posterUrls.current.forEach(url => URL.revokeObjectURL(url)); posterUrls.current = []; setPosters([]); }} aria-label="Cerrar imagen" className="p-2"><X size={20} /></button></div><div className="my-4 min-h-0 flex-1 overflow-y-auto"><div className="mb-3 grid grid-cols-3 gap-2">{posters.map(item => <button key={item.style} type="button" onClick={() => setSelectedPosterStyle(item.style)} aria-pressed={poster?.style === item.style} className={`border p-1 text-xs font-semibold ${poster?.style === item.style ? "border-[#793713] ring-2 ring-[#793713]" : "border-[#d9c6ad]"}`}><img src={item.url} alt={`Dise?o ${item.label}`} className="mb-1 h-32 w-full object-cover object-top" />{item.label}</button>)}</div><img src={poster.url} alt={`Imagen generada del men? para ${poster.date}`} className="mx-auto h-auto max-w-full" /></div><div className="mb-3 flex flex-wrap gap-2"><button type="button" onClick={() => void sharePoster()} className="inline-flex min-h-11 items-center gap-2 border border-[#793713] px-4 py-2 text-sm"><Share2 size={17} /> Compartir imagen</button><a href="https://business.facebook.com/latest/composer" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center border border-[#793713] px-4 py-2 text-sm">Abrir Meta Business Suite</a></div>{message && <p role="status" className="mb-3 text-sm">{message}</p>}<p className="mb-3 text-xs">Para programar la historia, descarga la imagen y s?bela en Meta Business Suite. Compartir no programa ni publica autom?ticamente.</p><a href={poster.url} download={poster.filename} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#793713] px-4 py-3 text-sm font-semibold text-white"><Download size={17} /> Descargar imagen PNG</a></div></div>}
   </div>;
 }

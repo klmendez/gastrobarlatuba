@@ -22,21 +22,13 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): st
   return lines;
 }
 
-function palm(ctx: CanvasRenderingContext2D, x: number, mirror: number) {
-  ctx.save(); ctx.translate(x, 0); ctx.scale(mirror, 1); ctx.strokeStyle = DARK; ctx.lineWidth = 7;
-  for (let i = 0; i < 6; i++) {
-    ctx.beginPath(); ctx.moveTo(-5, 0); ctx.quadraticCurveTo(45 + i * 12, 90, 145 + i * 12, 135 + i * 22); ctx.stroke();
-  }
-  ctx.restore();
-}
-
 async function loadLogo(): Promise<HTMLImageElement> {
   const image = new Image(); image.src = '/la-tuba-logo.png';
   try { await image.decode(); return image; }
   catch { throw new Error('No se pudo cargar el logo para la imagen.'); }
 }
 
-export async function generateDailyMenuPoster(menu: DailyMenuConfig): Promise<Blob> {
+export async function generateDailyMenuPoster(menu: DailyMenuConfig, style = menu.posterStyle): Promise<Blob> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(menu.scheduledDate)) throw new Error('El menú necesita una fecha válida.');
   const date = new Date(`${menu.scheduledDate}T12:00:00Z`);
   if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== menu.scheduledDate) throw new Error('El menú necesita una fecha válida.');
@@ -63,11 +55,10 @@ export async function generateDailyMenuPoster(menu: DailyMenuConfig): Promise<Bl
     tropical: ['#e6f5dd', '#b7dcaa', '#174b36'],
     elegante: ['#f6edf0', '#dbc6b5', '#4d2836'],
   };
-  const [topColor, bottomColor, ink] = palettes[menu.posterStyle] ?? palettes.clasico;
+  const [topColor, bottomColor, ink] = palettes[style] ?? palettes.clasico;
   const background = ctx.createLinearGradient(0, 0, WIDTH, height); background.addColorStop(0, topColor); background.addColorStop(1, bottomColor);
   ctx.fillStyle = background; ctx.fillRect(0, 0, WIDTH, height);
   ctx.strokeStyle = ink; ctx.lineWidth = 3; ctx.strokeRect(32, 32, WIDTH - 64, height - 64);
-  if (menu.posterStyle === 'tropical') palm(ctx, 38, 1); else if (menu.posterStyle === 'clasico') { palm(ctx, 38, 1); palm(ctx, WIDTH - 38, -1); }
   const logoWidth = 550; const logoHeight = logoWidth * logo.naturalHeight / logo.naturalWidth;
   ctx.drawImage(logo, (WIDTH - logoWidth) / 2, 100, logoWidth, logoHeight);
   const weekday = new Intl.DateTimeFormat('es-CO', { weekday: 'long', timeZone: 'UTC' }).format(date).toLocaleUpperCase('es-CO');
